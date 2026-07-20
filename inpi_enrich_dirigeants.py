@@ -1,26 +1,42 @@
 """
-Enrichissement dirigeants — QSR Paris (NAF 56.10C, 75xxx)
-Cible les leads déjà enrichis INPI (financier) mais sans dirigeant.
-À lancer après la fin de l'enrichissement financier.
+Enrichissement des dirigeants via l'API INPI.
+
+Cible : tous les leads ProKitchens (NAF 56.10C, 56.21Z, 56.29B) sur les zones
+IDF, Lyon, Lille, Marseille, déjà enrichis INPI (financier) ou prioritaires,
+et n'ayant pas encore de dirigeant.
+
+Quota INPI : 10 000 requêtes/jour. Le script s'arrête automatiquement au quota.
 """
 
+import os
+import sys
 import requests
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import List, Dict, Any, Optional
 
 # ─── Config ───
-INPI_USERNAME = "maxime.debaugnies@cloudkitchens.com"
-INPI_PASSWORD = "Thomas36130!"
+INPI_USERNAME = os.environ.get("INPI_USERNAME", "maxime.debaugnies@cloudkitchens.com")
+INPI_PASSWORD = os.environ.get("INPI_PASSWORD", "Thomas36130!")
 INPI_BASE_URL = "https://registre-national-entreprises.inpi.fr/api"
 
-SUPABASE_URL = "https://hxjryfaakdpwfgseirik.supabase.co"
-SUPABASE_API_KEY = "sb_publishable_a7xpn8srwByQrW1rXwpdlw_eQnwAoHT"
-SUPABASE_TABLE = "leads"
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://hxjryfaakdpwfgseirik.supabase.co")
+SUPABASE_API_KEY = os.environ.get("SUPABASE_API_KEY", "sb_publishable_a7xpn8srwByQrW1rXwpdlw_eQnwAoHT")
+SUPABASE_TABLE = os.environ.get("SUPABASE_TABLE", "leads")
 
 DAILY_QUOTA = 9500
 REQUEST_DELAY = 0.35
 BATCH_SIZE = 1000
 LOG_FILE = "/zpool/one/maxime.debaugnies/inpi_enrich_dirigeants.log"
+
+# NAF et zones cibles
+NAFS_CIBLES = ["56.10C", "56.21Z", "56.29B"]
+ZONES_DEPTS = {
+    "75", "77", "78", "91", "92", "93", "94", "95",  # IDF
+    "69",  # Lyon
+    "59", "62",  # Lille
+    "13", "83", "84",  # Marseille
+}
 
 ROLE_LABELS = {
     "53": "Président",
@@ -29,17 +45,37 @@ ROLE_LABELS = {
     "11": "Co-gérant",
     "16": "Président du conseil d'administration",
     "17": "Administrateur",
+    "30": "Directeur général délégué",
+    "52": "Président directeur général",
+    "71": "Représentant permanent",
 }
 
 
-def log(msg):
+def log(msg: str):
     line = f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}"
     print(line, flush=True)
     with open(LOG_FILE, "a") as f:
         f.write(line + "\n")
 
 
-def inpi_login():
+def supabase_headers() -> Dict[str, str]:
+    return {
+        "apikey": SUPABASE_API_KEY,
+        "Authorization": f"Bearer {SUPABASE_API_KEY}",
+        "Accept": "application/json",
+    }
+
+
+def supabase_write_headers() -> Dict[str, str]:
+    return {
+        "apikey": SUPABASE_API_KEY,
+        "Authorization": f"Bearer {SUPABASE_API_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal",
+    }
+
+
+def inpi_login() -> str:
     resp = requests.post(
         f"{INPI_BASE_URL}/sso/login",
         json={"username": INPI_USERNAME, "password": INPI_PASSWORD},
@@ -51,36 +87,66 @@ def inpi_login():
     return resp.json()["token"]
 
 
-def fetch_leads(limit):
-    resp = requests.get(
-        f"{SUPABASE_URL}/rest/v1/{SUPABASE_TABLE}",
-        params={
-            "select": "siren,nom,ville",
-            "code_naf": "eq.56.10C",
-            "code_postal": "like.75*",
-            "enriched_inpi": "eq.true",
-            "dirigeant_nom": "is.null",
-            "limit": limit,
-        },
-        headers={
-            "apikey": SUPABASE_API_KEY,
-            "Authorization": f"Bearer {SUPABASE_API_KEY}",
-            "Accept": "application/json",
-        },
-        timeout=30,
+def fetch_leads(limit: int) -> List[Dict[str, Any]]:
+    """
+    Récupère les leads cibles :
+    - NAF cible
+    - département cible
+    - pas de dirigeant déjà renseigné
+    - pas d'échec récent INPI dirigeants (< 30 jours)
+    """
+    dept_or = ",".join(f"code_postal.like.{dep}*" for dep in sorted(ZONES_DEPTS))
+    thirty_days_ago = (datetime.now() - timedelta(days=30)).isoformat()
+
+    # Syntaxe PostgREST : and=(or(dept1,dept2,...),code_naf.in.(...),dirigeant_nom.is.null,...)
+    and_filter = (
+        f"and=(or({dept_or}),"
+        f"code_naf.in.({','.join(NAFS_CIBLES)}),"
+        f"dirigeant_nom.is.null,"
+        f"or(inpi_dirigeants_failed.is.null,inpi_dirigeants_failed.lt.{thirty_days_ago}))"
     )
-    resp.raise_for_status()
-    return resp.json()
+
+    params = {
+        "select": "siren,nom,ville,code_postal",
+        "and": and_filter,
+        "limit": limit,
+        "order": "score.desc.nullslast",
+    }
+
+    try:
+        resp = requests.get(
+            f"{SUPABASE_URL}/rest/v1/{SUPABASE_TABLE}",
+            params=params,
+            headers=supabase_headers(),
+            timeout=30,
+        )
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:
+        log(f"Erreur récupération leads : {e}")
+        return []
 
 
-def extract_dirigeant(data):
-    pouvoirs = (
-        data.get("formality", {})
-        .get("content", {})
-        .get("personneMorale", {})
-        .get("composition", {})
-        .get("pouvoirs", [])
-    )
+def extract_dirigeant(data: Dict[str, Any]) -> Optional[Dict[str, str]]:
+    """Extrait le premier dirigeant individuel de la réponse INPI."""
+    content = data.get("formality", {}).get("content", {})
+
+    # Personne morale
+    pm = content.get("personneMorale", {})
+    pouvoirs = pm.get("composition", {}).get("pouvoirs", [])
+
+    # Personne physique
+    pp = content.get("personnePhysique", {})
+    if not pouvoirs and pp:
+        etablissement = pp.get("etablissementPrincipal", {})
+        nom = pp.get("nom")
+        prenoms = pp.get("prenoms", [])
+        if nom and prenoms:
+            return {
+                "dirigeant_nom": nom.title(),
+                "dirigeant_prenom": prenoms[0].title(),
+                "dirigeant_role": "Entrepreneur individuel",
+            }
 
     for pouvoir in pouvoirs:
         individu = pouvoir.get("individu", {})
@@ -99,7 +165,11 @@ def extract_dirigeant(data):
     return None
 
 
-def get_dirigeant(siren, headers):
+def get_dirigeant(siren: str, headers: Dict[str, str]) -> Optional[Dict[str, str]]:
+    """
+    Récupère le dirigeant pour un SIREN. Retourne None si non trouvé.
+    Retourne la string 'REAUTH' si le token a expiré.
+    """
     try:
         resp = requests.get(
             f"{INPI_BASE_URL}/companies/{siren}",
@@ -113,35 +183,37 @@ def get_dirigeant(siren, headers):
     if resp.status_code == 404:
         return None
     if resp.status_code == 429:
-        log("  Rate limit, pause 60s...")
+        log("  Rate limit INPI, pause 60s...")
         time.sleep(60)
         return get_dirigeant(siren, headers)
     if resp.status_code == 401:
-        return "REAUTH"
+        return "REAUTH"  # type: ignore
     if resp.status_code != 200:
+        log(f"  Erreur INPI {siren}: HTTP {resp.status_code}")
         return None
 
     return extract_dirigeant(resp.json())
 
 
-def patch_lead(siren, dirigeant_data):
-    resp = requests.patch(
-        f"{SUPABASE_URL}/rest/v1/{SUPABASE_TABLE}?siren=eq.{siren}",
-        headers={
-            "apikey": SUPABASE_API_KEY,
-            "Authorization": f"Bearer {SUPABASE_API_KEY}",
-            "Content-Type": "application/json",
-            "Prefer": "return=minimal",
-        },
-        json=dirigeant_data,
-        timeout=30,
-    )
-    return resp.status_code in (200, 204)
+def patch_lead(siren: str, data: Dict[str, Any]) -> bool:
+    """Met à jour un lead dans Supabase."""
+    try:
+        resp = requests.patch(
+            f"{SUPABASE_URL}/rest/v1/{SUPABASE_TABLE}?siren=eq.{siren}",
+            headers=supabase_write_headers(),
+            json=data,
+            timeout=30,
+        )
+        return resp.status_code in (200, 204)
+    except Exception as e:
+        log(f"  Erreur patch SIREN {siren}: {e}")
+        return False
 
 
 def main():
     log("=" * 60)
-    log("Démarrage enrichissement dirigeants — QSR Paris")
+    log("Démarrage enrichissement dirigeants INPI")
+    log(f"Zones : {', '.join(sorted(ZONES_DEPTS))} | NAF : {', '.join(NAFS_CIBLES)}")
     log("=" * 60)
 
     token = inpi_login()
@@ -157,7 +229,7 @@ def main():
 
         leads = fetch_leads(batch_size)
         if not leads:
-            log("Plus aucun lead à enrichir !")
+            log("Plus aucun lead à enrichir.")
             break
 
         log(f"Batch de {len(leads)} leads (API calls: {api_calls}/{DAILY_QUOTA})")
@@ -186,7 +258,8 @@ def main():
                 log(f"  [{total_processed+1}] {nom:45s} -> {dirigeant['dirigeant_prenom']} {dirigeant['dirigeant_nom']} ({role})")
                 patch_lead(siren, dirigeant)
             else:
-                patch_lead(siren, {"dirigeant_nom": ""})
+                # Marque l'échec pour ne pas re-tenter immédiatement
+                patch_lead(siren, {"inpi_dirigeants_failed": datetime.now().isoformat()})
 
             total_processed += 1
 
@@ -204,4 +277,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        log(f"ERREUR FATALE : {e}")
+        sys.exit(1)
