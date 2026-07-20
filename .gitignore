@@ -1,0 +1,68 @@
+# Secrets et credentials
+*.env
+.env.*
+.env.local
+.env.production
+cle_sync.txt
+.git-credentials
+.gitconfig
+*.pem
+*.key
+
+# Dossiers système et outils
+.nvm/
+.cache/
+.claude/
+.claude.json
+.codex/
+.conda/
+.config/
+.ipython/
+.jupyter/
+.kube/
+.local/
+.npm/
+.supabase/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+
+# Historiques et fichiers personnels
+.python_history
+shared
+user_private
+
+# Fichiers shell personnels
+.bash_history
+.bash_profile
+.bashrc
+.zshrc
+.profile
+
+# Logs
+*.log
+autoexec.log
+
+# Données volumineuses / générées (CSV, JSON, Parquet, etc.)
+*.csv
+*.xlsx
+*.parquet
+*.db
+*.sqlite
+
+# Documents binaires lourds
+*.pdf
+*.zip
+*.tar.gz
+
+# Application Next.js (déjà dans son propre dépôt git)
+prokitchens-app/
+
+# Notebooks checkpoints
+.ipynb_checkpoints/
+
+# Fichiers temporaires
+*.tmp
+*.swp
+*~
+untitled.py

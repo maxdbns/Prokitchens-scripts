@@ -1,0 +1,119 @@
+FICHE WECHEFS — VISITE CLIENT
+========================================
+
+1. PITCH DE MON FAUX PROJET
+----------------------------------------
+
+Nom de l'enseigne (fictive) : Bowl Society
+Concept : fast-casual healthy, bowls & salades
+Implantation : 3 points de vente en petite couronne parisienne (Neuilly, Levallois, Boulogne)
+Volume actuel : ~800 couverts/semaine en cumule
+Besoin : centraliser la production (preparation des bases, sauces, toppings, packaging) pour standardiser la qualite et preparer une 4eme ouverture.
+
+Pourquoi WeChefs :
+- Pas de CapEx pour monter un labo
+- On veut commencer en WeCook (test), puis migrer en WeScale
+- Besoin d'acces flexible (pics le midi, faible l'apres-midi)
+
+
+2. EMAIL DE PRISE DE CONTACT
+----------------------------------------
+
+Objet : Demande de visite — centralisation production pour enseigne fast-casual
+
+---
+
+Bonjour,
+
+Je suis [Ton prenom], fondateur de Bowl Society, une enseigne fast-casual healthy en developpement dans la region parisienne.
+
+Aujourd'hui nous avons 3 points de vente et nous produisons encore dans les cuisines arriere de nos restaurants. Nous atteignons les limites en termes de place, de standardisation des recettes et de gestion des pics d'activite.
+
+Nous cherchons un laboratoire alimentaire cle en main pour centraliser notre production de base, sans investissement lourd initial. Votre modele WeCook / WeScale / WeProd correspond bien a notre demarche : commencer avec des espaces partages, puis evoluer vers un labo prive si les volumes le justifient.
+
+Serait-il possible d'organiser une visite de votre site de Nanterre et un echange avec un commercial pour comprendre :
+- les tarifs mensuels selon les formules,
+- les equipements et surfaces disponibles,
+- les modalites d'engagement,
+- les delais de mise a disposition ?
+
+Nous sommes disponibles en semaine, en matinee ou en debut d'apres-midi.
+
+Merci d'avance et bonne journee.
+
+[Ton prenom]
+[Ton telephone]
+[Email]
+
+
+3. QUESTIONS A POSER SUR PLACE
+----------------------------------------
+
+A. Tarifs & contrat
+[ ] Tarif mensuel WeCook / WeScale / WeProd ?
+[ ] Engagement minimum ? (1 mois ? 3 mois ? 6 mois ?)
+[ ] Depot de garantie / caution ?
+[ ] Facturation a l'heure, au jour, au mois, au poste de travail ?
+[ ] Ce qui est inclus dans "all inclusive" : electricite, eau, gaz, internet, assurances, nettoyage, poubelles, dechets organiques ?
+[ ] Augmentation de tarif annuelle / revision ?
+
+B. Espaces & equipements
+[ ] Surface exacte du site de Nanterre ?
+[ ] Surface des labos partages (WeCook) et prives (WeScale / WeProd) ?
+[ ] Equipements disponibles : fours, mixeurs, chambres froides, surgeleateurs, tables de preparation, balances, machine sous-vide, emballage...
+[ ] Possibilite d'apporter son propre materiel ?
+[ ] Stockage de matieres premieres possible ? Conditions ?
+[ ] Etagieres / box dedies par client dans les espaces partages ?
+
+C. Exploitation & HACCP
+[ ] Certifications du site (HACCP, controle sanitaire, labels) ?
+[ ] Aide a la mise en conformite / accompagnement HACCP ?
+[ ] Horaires d'acces du site (24h/24 ? 7j/7 ? jours feries ?)
+[ ] Nombre de personnes max par poste / labo ?
+[ ] Gestion des livraisons fournisseurs (creneaux, quai, reception) ?
+[ ] Livraison de produits finis vers nos points de vente : service possible ?
+
+D. Fit avec mon projet
+[ ] Puis-je produire pour mes 3 points de vente depuis un seul labo ?
+[ ] Passage possible de WeCook a WeScale sans changer de site ?
+[ ] Delai d'acces apres signature ? (1 semaine ? 1 mois ?)
+[ ] Possibilite de faire un essai / test d'1 journee avant engagement ?
+[ ] References de clients dans le fast-casual / dark kitchen ?
+
+
+4. NOTES A COMPLETER PENDANT LA VISITE
+----------------------------------------
+
+Sujet                              | Info relevee
+-----------------------------------|----------------------------------
+Tarif WeCook                       |
+Tarif WeScale                      |
+Tarif WeProd                       |
+Engagement min                     |
+Surface labo                       |
+Equipements cles                   |
+Horaires d'acces                   |
+Delai mise a dispo                 |
+References clients                 |
+Forces vs concurrence              |
+Faiblesses / limites               |
+Prochaines ouvertures              |
+
+
+5. RAPPELS IMPORTANTS
+----------------------------------------
+
+- Ne pas mentionner ProKitchens pendant la visite.
+- Jouer le prospect serieux, pas trop curieux.
+- Demander un devis ecrit si possible.
+- Prendre des photos seulement si le commercial accepte.
+
+
+SOURCES DE LA RECHERCHE
+----------------------------------------
+- wechefs.fr
+- wechefs.fr/contactez-nous
+- wechefs.fr/mentions-legales
+- isalys.be
+- prokitchens.com/fr
+- LinkedIn WeChefs
