@@ -15,7 +15,8 @@ ALTER TABLE leads
   ADD COLUMN IF NOT EXISTS score_contact smallint DEFAULT 0,
   ADD COLUMN IF NOT EXISTS score_intention smallint DEFAULT 0,
   ADD COLUMN IF NOT EXISTS score_chaine smallint DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS score_total smallint DEFAULT 0;
+  ADD COLUMN IF NOT EXISTS score_total smallint DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS last_cleanup_check timestamptz;
 
 -- ─── Score contact (qualité des données de contact) ───
 -- 0-25 points : téléphone, site web, email
