@@ -8,6 +8,7 @@ aux horaires programmés.
 
 Tâches :
 - 03:00  daily_sirene_delta.py          delta Sirene (nouveaux / maj / fermetures)
+- 03:30  dimanche  run-insee-sync.sh    sync INSEE multi-sites (nouvelles enseignes / expansions, manuel/hebdo)
 - 04:00  backfill-etablissements.py     réparation des établissements manquants
 - 05:00  enrich_contact.py              enrichissement email/téléphone depuis le web
 - 06:00  dimanche  inpi_enrich_dirigeants.py   dirigeants INPI
@@ -45,9 +46,12 @@ LOCK_FILE = ROOT_DIR / "lead_scheduler.lock"
 SCHEDULE = [
     # (heure, minute, jour_semaine ou None, nom, [commande], cwd, description)
     # jour_semaine : 0=lundi ... 6=dimanche, None = tous les jours
-    (3, 0, None, "run-insee-sync",
+    (3, 0, None, "daily_sirene_delta",
+     [sys.executable, str(ROOT_DIR / "daily_sirene_delta.py")], ROOT_DIR,
+     "Delta Sirene quotidien (nouveaux / maj / fermetures)"),
+    (3, 30, 6, "run-insee-sync",
      ["/bin/bash", str(ROOT_DIR / "run-insee-sync.sh")], ROOT_DIR,
-     "Sync INSEE multi-sites (nouvelles enseignes / expansions)"),
+     "Sync INSEE multi-sites (nouvelles enseignes / expansions, hebdomadaire)"),
     (4, 0, None, "backfill-etablissements",
      [sys.executable, str(APP_DIR / "scripts" / "backfill-etablissements.py")], APP_DIR,
      "Réparation des établissements manquants"),

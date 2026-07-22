@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Lance le sync INSEE TypeScript (run-insee-sync.ts) avec Node 20.
-# Utilisé par lead_scheduler.py à la place du daily_sirene_delta.py obsolète.
+# Utilisé par lead_scheduler.py le dimanche à 03:30 pour la découverte multi-sites.
 set -e
 
 cd /zpool/one/maxime.debaugnies/prokitchens-app
