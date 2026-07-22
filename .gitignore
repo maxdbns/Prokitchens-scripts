@@ -69,3 +69,5 @@ untitled.py
 
 # Fichiers de state local des scripts
 .daily_sirene_delta_last_run
+lead_scheduler.pid
+lead_scheduler.lock
