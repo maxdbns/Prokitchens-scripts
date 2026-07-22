@@ -20,8 +20,8 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional, Set
 
 # ─── Config ───
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://hxjryfaakdpwfgseirik.supabase.co")
-SUPABASE_API_KEY = os.environ.get("SUPABASE_API_KEY", "sb_publishable_a7xpn8srwByQrW1rXwpdlw_eQnwAoHT")
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
+SUPABASE_API_KEY = os.environ.get("SUPABASE_API_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 SUPABASE_TABLE = os.environ.get("SUPABASE_TABLE", "leads")
 
 MAX_LEADS = 200

@@ -16,12 +16,12 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 
 # ─── Config ───
-INPI_USERNAME = os.environ.get("INPI_USERNAME", "maxime.debaugnies@cloudkitchens.com")
-INPI_PASSWORD = os.environ.get("INPI_PASSWORD", "Thomas36130!")
+INPI_USERNAME = os.environ.get("INPI_USERNAME")
+INPI_PASSWORD = os.environ.get("INPI_PASSWORD")
 INPI_BASE_URL = "https://registre-national-entreprises.inpi.fr/api"
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://hxjryfaakdpwfgseirik.supabase.co")
-SUPABASE_API_KEY = os.environ.get("SUPABASE_API_KEY", "sb_publishable_a7xpn8srwByQrW1rXwpdlw_eQnwAoHT")
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
+SUPABASE_API_KEY = os.environ.get("SUPABASE_API_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 SUPABASE_TABLE = os.environ.get("SUPABASE_TABLE", "leads")
 
 DAILY_QUOTA = 9500

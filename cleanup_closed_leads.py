@@ -13,9 +13,9 @@ import csv
 import os
 import sys
 
-SUPABASE_URL = "https://hxjryfaakdpwfgseirik.supabase.co"
-SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4anJ5ZmFha2Rwd2Znc2VpcmlrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjkwMzgwMCwiZXhwIjoyMDk4NDc5ODAwfQ.gGba1EWAucnG7kaI2E__-lSWj1yAQjyEp2LpltFiKKw"
-INSEE_API_KEY = "faf1d66f-9ab7-4986-b1d6-6f9ab7398604"
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
+SUPABASE_API_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_API_KEY")
+INSEE_API_KEY = os.environ.get("INSEE_API_KEY")
 INSEE_SIREN_URL = "https://api.insee.fr/api-sirene/3.11/siren"
 
 CSV_PATH = "leads_manquants_salesforce.csv"

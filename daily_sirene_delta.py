@@ -152,7 +152,7 @@ def build_query_date_window(date_from: str, date_to: str, mode: str) -> str:
     elif mode == "update":
         return f"{base} AND dateDernierTraitementEtablissement:[{date_from} TO {date_to}] AND NOT(dateCreationEtablissement:[{date_from} TO {date_to}])"
     elif mode == "fermeture":
-        return f"{base} AND etatAdministratifEtablissement:F AND dateDernierTraitementEtablissement:[{date_from} TO {date_to}]"
+        return f"periode({naf_filter} AND etatAdministratifEtablissement:F AND dateDernierTraitementEtablissement:[{date_from} TO {date_to}])"
     else:
         raise ValueError(f"Mode inconnu : {mode}")
 
