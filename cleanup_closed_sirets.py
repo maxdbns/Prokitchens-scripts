@@ -11,6 +11,9 @@ import os
 import requests
 import time
 
+import prokitchens_env
+prokitchens_env.load_env()
+
 SUPABASE_URL = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
 SUPABASE_API_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_API_KEY")
 INSEE_API_KEY = os.environ.get("INSEE_API_KEY")

@@ -16,43 +16,10 @@ import requests
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Set, Tuple, Optional
 
+import prokitchens_env
+prokitchens_env.load_env()
+
 from check_bob import est_dans_bob, charger_book, normaliser_nom
-
-APP_DIR = "/zpool/one/maxime.debaugnies/prokitchens-app"
-
-
-def load_env_file(path: str) -> Dict[str, str]:
-    """Charge un fichier .env simple (KEY=VALUE, sans substitution)."""
-    env = {}
-    if not os.path.exists(path):
-        return env
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            key, _, value = line.partition("=")
-            key = key.strip()
-            value = value.strip().strip('"').strip("'")
-            if key:
-                env[key] = value
-    return env
-
-
-def load_env():
-    """Charge .env et .env.local sans écraser les variables existantes."""
-    for fname in (".env", ".env.local"):
-        for key, value in load_env_file(os.path.join(APP_DIR, fname)).items():
-            if key not in os.environ:
-                os.environ[key] = value
-    # Alias utilisés par les scripts racine
-    if not os.environ.get("SUPABASE_URL") and os.environ.get("NEXT_PUBLIC_SUPABASE_URL"):
-        os.environ["SUPABASE_URL"] = os.environ["NEXT_PUBLIC_SUPABASE_URL"]
-    if not os.environ.get("SUPABASE_API_KEY") and os.environ.get("SUPABASE_SERVICE_ROLE_KEY"):
-        os.environ["SUPABASE_API_KEY"] = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
-
-
-load_env()
 
 # ─── Config ───
 INSEE_API_KEY = os.environ.get("INSEE_API_KEY", "")

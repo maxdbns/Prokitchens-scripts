@@ -19,6 +19,9 @@ from urllib.parse import urljoin, urlparse
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Set
 
+import prokitchens_env
+prokitchens_env.load_env()
+
 # ─── Config ───
 SUPABASE_URL = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
 SUPABASE_API_KEY = os.environ.get("SUPABASE_API_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")

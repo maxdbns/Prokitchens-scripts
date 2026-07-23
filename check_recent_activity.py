@@ -2,11 +2,15 @@
 Vérifie l'activité récente sur la base Supabase (cron, leads, notifications).
 """
 
+import os
 import requests
 from datetime import datetime, timedelta, timezone
 
-SUPABASE_URL = "https://hxjryfaakdpwfgseirik.supabase.co"
-SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4anJ5ZmFha2Rwd2Znc2VpcmlrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjkwMzgwMCwiZXhwIjoyMDk4NDc5ODAwfQ.gGba1EWAucnG7kaI2E__-lSWj1yAQjyEp2LpltFiKKw"
+import prokitchens_env
+prokitchens_env.load_env()
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_API_KEY = os.environ.get("SUPABASE_API_KEY", "")
 
 
 def supabase_headers():

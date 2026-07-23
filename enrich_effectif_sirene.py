@@ -9,12 +9,15 @@ import time
 import requests
 from datetime import datetime
 
+import prokitchens_env
+prokitchens_env.load_env()
+
 # ─── Config ───
-INSEE_API_KEY = os.environ.get("INSEE_API_KEY", "faf1d66f-9ab7-4986-b1d6-6f9ab7398604")
+INSEE_API_KEY = os.environ.get("INSEE_API_KEY", "")
 INSEE_SIREN_URL = "https://api.insee.fr/api-sirene/3.11/siren"
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://hxjryfaakdpwfgseirik.supabase.co")
-SUPABASE_API_KEY = os.environ.get("SUPABASE_API_KEY", "sb_publishable_a7xpn8srwByQrW1rXwpdlw_eQnwAoHT")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_API_KEY = os.environ.get("SUPABASE_API_KEY", "")
 SUPABASE_TABLE = "leads"
 
 BATCH_SIZE = 100
