@@ -46,7 +46,7 @@ LOCK_FILE = ROOT_DIR / "lead_scheduler.lock"
 SCHEDULE = [
     # (heure, minute, jour_semaine ou None, nom, [commande], cwd, description)
     # jour_semaine : 0=lundi ... 6=dimanche, None = tous les jours
-    (3, 0, None, "daily_sirene_delta",
+    (2, 30, None, "daily_sirene_delta",
      [sys.executable, str(ROOT_DIR / "daily_sirene_delta.py")], ROOT_DIR,
      "Delta Sirene quotidien (nouveaux / maj / fermetures)"),
     (3, 30, 6, "run-insee-sync",
