@@ -84,13 +84,16 @@ CHECK_INTERVAL_SECONDS = 60
 
 
 # ─── Logging ───
+# En mode daemon (nohup), stdout est redirigé vers le fichier de log. On évite
+# alors d'ajouter un StreamHandler pour ne pas écrire chaque ligne deux fois.
+handlers = [logging.FileHandler(LOG_FILE)]
+if sys.stdout.isatty():
+    handlers.append(logging.StreamHandler(sys.stdout))
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.FileHandler(LOG_FILE),
-        logging.StreamHandler(sys.stdout),
-    ],
+    handlers=handlers,
 )
 log = logging.getLogger("lead_scheduler")
 
