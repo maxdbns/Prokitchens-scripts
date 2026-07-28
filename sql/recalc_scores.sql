@@ -64,23 +64,23 @@ UPDATE leads SET
   END;
 
 -- ─── Score croissance (max 30) ───
+-- Composantes : croissance CA (max 15), ouvertures récentes (max 10), combo expansion (max 5)
 UPDATE leads SET
-  score_croissance = CASE
-    WHEN chiffre_affaires IS NOT NULL AND chiffre_affaires > 0 AND croissance_ca IS NOT NULL THEN
-      (CASE WHEN croissance_ca >= 30 THEN 15 WHEN croissance_ca >= 15 THEN 12 WHEN croissance_ca >= 5 THEN 8 WHEN croissance_ca >= 0 THEN 4 ELSE 0 END)
-      + (CASE WHEN COALESCE(sites_ouverts_12m,0) >= 3 THEN 15 WHEN COALESCE(sites_ouverts_12m,0) >= 2 THEN 12 WHEN COALESCE(sites_ouverts_12m,0) >= 1 AND derniere_ouverture IS NOT NULL AND derniere_ouverture::date >= CURRENT_DATE - INTERVAL '6 months' THEN 8 WHEN COALESCE(sites_ouverts_12m,0) >= 1 THEN 4 ELSE 0 END)
-      + (CASE WHEN nb_etablissements >= 3 AND derniere_ouverture IS NOT NULL AND derniere_ouverture::date >= CURRENT_DATE - INTERVAL '6 months' THEN 5 WHEN nb_etablissements >= 2 AND derniere_ouverture IS NOT NULL AND derniere_ouverture::date >= CURRENT_DATE - INTERVAL '12 months' THEN 3 ELSE 0 END)
-    WHEN chiffre_affaires IS NULL OR chiffre_affaires <= 0 THEN
-      ROUND((
-        (CASE WHEN COALESCE(sites_ouverts_12m,0) >= 3 THEN 15 WHEN COALESCE(sites_ouverts_12m,0) >= 2 THEN 12 WHEN COALESCE(sites_ouverts_12m,0) >= 1 AND derniere_ouverture IS NOT NULL AND derniere_ouverture::date >= CURRENT_DATE - INTERVAL '6 months' THEN 8 WHEN COALESCE(sites_ouverts_12m,0) >= 1 THEN 4 ELSE 0 END)
-        + (CASE WHEN nb_etablissements >= 3 AND derniere_ouverture IS NOT NULL AND derniere_ouverture::date >= CURRENT_DATE - INTERVAL '6 months' THEN 5 WHEN nb_etablissements >= 2 AND derniere_ouverture IS NOT NULL AND derniere_ouverture::date >= CURRENT_DATE - INTERVAL '12 months' THEN 3 ELSE 0 END)
-      )::numeric / 20.0 * 40.0)::smallint
-    ELSE
-      ROUND((
-        (CASE WHEN COALESCE(sites_ouverts_12m,0) >= 3 THEN 15 WHEN COALESCE(sites_ouverts_12m,0) >= 2 THEN 12 WHEN COALESCE(sites_ouverts_12m,0) >= 1 AND derniere_ouverture IS NOT NULL AND derniere_ouverture::date >= CURRENT_DATE - INTERVAL '6 months' THEN 8 WHEN COALESCE(sites_ouverts_12m,0) >= 1 THEN 4 ELSE 0 END)
-        + (CASE WHEN nb_etablissements >= 3 AND derniere_ouverture IS NOT NULL AND derniere_ouverture::date >= CURRENT_DATE - INTERVAL '6 months' THEN 5 WHEN nb_etablissements >= 2 AND derniere_ouverture IS NOT NULL AND derniere_ouverture::date >= CURRENT_DATE - INTERVAL '12 months' THEN 3 ELSE 0 END)
-      )::numeric / 20.0 * 35.0)::smallint
-  END;
+  score_croissance =
+    (CASE WHEN croissance_ca IS NOT NULL AND chiffre_affaires IS NOT NULL AND chiffre_affaires > 0 THEN
+      CASE WHEN croissance_ca >= 30 THEN 15
+           WHEN croissance_ca >= 15 THEN 12
+           WHEN croissance_ca >= 5 THEN 8
+           WHEN croissance_ca >= 0 THEN 4
+           ELSE 0 END
+      ELSE 0 END)
+    + (CASE WHEN COALESCE(sites_ouverts_12m,0) >= 3 THEN 10
+            WHEN COALESCE(sites_ouverts_12m,0) >= 2 THEN 6
+            WHEN COALESCE(sites_ouverts_12m,0) >= 1 AND derniere_ouverture IS NOT NULL AND derniere_ouverture::date >= CURRENT_DATE - INTERVAL '6 months' THEN 3
+            ELSE 0 END)
+    + (CASE WHEN nb_etablissements >= 3 AND derniere_ouverture IS NOT NULL AND derniere_ouverture::date >= CURRENT_DATE - INTERVAL '6 months' THEN 5
+            WHEN nb_etablissements >= 2 AND derniere_ouverture IS NOT NULL AND derniere_ouverture::date >= CURRENT_DATE - INTERVAL '12 months' THEN 2
+            ELSE 0 END);
 
 -- ─── Score intention (signaux d'achat) ───
 -- 0-25 points : croissance récente, ouvertures récentes, appels d'offres, changement de dirigeant

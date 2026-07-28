@@ -735,28 +735,25 @@ def compute_score(lead: Dict[str, Any]) -> Dict[str, int]:
 
     score_ouvertures = 0
     if sites_ouverts >= 3:
-        score_ouvertures = 15
+        score_ouvertures = 10
     elif sites_ouverts >= 2:
-        score_ouvertures = 12
+        score_ouvertures = 6
     elif sites_ouverts >= 1:
-        score_ouvertures = 8 if within_6_months else 4
+        score_ouvertures = 3 if within_6_months else 0
 
     score_combo = 0
     if derniere_ouverture:
         if nb_etabs >= 3 and within_6_months:
             score_combo = 5
         elif nb_etabs >= 2 and within_12_months:
-            score_combo = 3
+            score_combo = 2
+
+    score_croissance = score_ca_growth + score_ouvertures + score_combo
 
     if not has_ca:
         score_sites = round(score_sites_raw / 35 * 60)
-        score_croissance = round((score_ouvertures + score_combo) / 20 * 40)
-    elif not has_ca_growth:
-        score_sites = score_sites_raw
-        score_croissance = round((score_ouvertures + score_combo) / 20 * 35)
     else:
         score_sites = score_sites_raw
-        score_croissance = score_ca_growth + score_ouvertures + score_combo
 
     # Axe Contact (max 25)
     score_contact = 0
