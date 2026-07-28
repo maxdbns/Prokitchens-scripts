@@ -21,7 +21,7 @@ SUPABASE_API_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get
 INSEE_API_KEY = os.environ.get("INSEE_API_KEY")
 INSEE_SIREN_URL = "https://api.insee.fr/api-sirene/3.11/siren"
 
-CSV_PATH = "leads_manquants_salesforce.csv"
+CSV_PATH = "data/leads_manquants_salesforce.csv"
 BATCH_SIZE = 80
 API_TIMEOUT = 60
 

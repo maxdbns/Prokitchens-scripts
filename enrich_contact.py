@@ -31,7 +31,7 @@ MAX_LEADS = 200
 BATCH_SIZE = 50
 REQUEST_TIMEOUT = 10
 REQUEST_DELAY = 0.5
-LOG_FILE = "/zpool/one/maxime.debaugnies/enrich_contact.log"
+LOG_FILE = "/zpool/one/maxime.debaugnies/logs/enrich_contact.log"
 
 EMAIL_REGEX = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", re.IGNORECASE)
 PHONE_REGEX = re.compile(r"[\+]?[0-9\s\.\-\(\)]{8,}")

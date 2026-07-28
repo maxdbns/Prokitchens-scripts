@@ -26,7 +26,7 @@ SUPABASE_TABLE = os.environ.get("SUPABASE_TABLE", "leads")
 
 SCORE_THRESHOLD = 40
 OUTPUT_CSV = f"hot_leads_{datetime.now().strftime('%Y-%m-%d')}.csv"
-LOG_FILE = "/zpool/one/maxime.debaugnies/hot_leads.log"
+LOG_FILE = "/zpool/one/maxime.debaugnies/logs/hot_leads.log"
 
 
 def log(msg: str):

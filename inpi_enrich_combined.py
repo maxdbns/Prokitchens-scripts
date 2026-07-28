@@ -19,7 +19,7 @@ SUPABASE_TABLE = "leads"
 DAILY_QUOTA = 9500
 MAX_WORKERS = 1
 REQUEST_DELAY = 0.5
-LOG_FILE = "/zpool/one/maxime.debaugnies/inpi_enrich_combined.log"
+LOG_FILE = "/zpool/one/maxime.debaugnies/logs/inpi_enrich_combined.log"
 
 ROLE_LABELS = {
     "53": "Président",

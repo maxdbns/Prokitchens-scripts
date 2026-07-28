@@ -3,8 +3,8 @@ Retire les leads automatiquement ajoutes non pertinents du manual review.
 """
 import csv
 
-INPUT = "LEADS_PROKITCHES_MANUAL_REVIEW.csv"
-OUTPUT = "LEADS_PROKITCHES_MANUAL_REVIEW.csv"
+INPUT = "data/LEADS_PROKITCHES_MANUAL_REVIEW.csv"
+OUTPUT = "data/LEADS_PROKITCHES_MANUAL_REVIEW.csv"
 
 EXCLUDED_SIRENS = {
     "542095336",  # RELAY / LAGARDERE

@@ -71,7 +71,7 @@ ETAB_UPSERT_BATCH_SIZE = 10
 LEAD_UPDATE_BATCH_SIZE = 50
 CLOSED_DELETE_BATCH_SIZE = 10
 REQUEST_DELAY = 0.5
-LOG_FILE = "/zpool/one/maxime.debaugnies/daily_sirene_delta.log"
+LOG_FILE = "/zpool/one/maxime.debaugnies/logs/daily_sirene_delta.log"
 MARKER_FILE = "/zpool/one/maxime.debaugnies/.daily_sirene_delta_last_run"
 
 EXCLUDED_BRANDS = {
@@ -390,6 +390,13 @@ def build_lead_row(siren: str, etabs: List[Dict[str, Any]]) -> Optional[Dict[str
         "statut": "nouveau",
         "nb_etablissements": len(actifs),
         "score": 0,
+        "score_total": 0,
+        "score_ca": 0,
+        "score_sites": 0,
+        "score_croissance": 0,
+        "score_contact": 0,
+        "score_intention": 0,
+        "score_chaine": 0,
         "enriched_pappers": False,
         "enriched_google": False,
         "enriched_at": datetime.now().isoformat(),
@@ -593,7 +600,7 @@ def recompute_scores(lead_ids: List[int]) -> Tuple[int, int]:
             resp = requests.get(
                 f"{SUPABASE_URL}/rest/v1/leads",
                 params={
-                    "select": "id,siren,nb_etablissements,derniere_ouverture,sites_ouverts_12m,chiffre_affaires,croissance_ca",
+                    "select": "id,siren,nb_etablissements,derniere_ouverture,sites_ouverts_12m,chiffre_affaires,croissance_ca,telephone,site_web,email,nb_tenders,nb_tender_notices,is_chaine",
                     "id": f"in.({id_filter})",
                     "limit": 100,
                 },
@@ -611,13 +618,17 @@ def recompute_scores(lead_ids: List[int]) -> Tuple[int, int]:
 
     updates = []
     for lead in leads_to_score:
-        score, score_ca, score_sites, score_croissance = compute_score(lead)
+        sr = compute_score(lead)
         updates.append({
             "siren": lead["siren"],
-            "score": score,
-            "score_ca": score_ca,
-            "score_sites": score_sites,
-            "score_croissance": score_croissance,
+            "score": sr["score_total"],
+            "score_total": sr["score_total"],
+            "score_ca": sr["score_ca"],
+            "score_sites": sr["score_sites"],
+            "score_croissance": sr["score_croissance"],
+            "score_contact": sr["score_contact"],
+            "score_intention": sr["score_intention"],
+            "score_chaine": sr["score_chaine"],
         })
 
     if not updates:
@@ -637,9 +648,13 @@ def recompute_scores(lead_ids: List[int]) -> Tuple[int, int]:
                     headers=supabase_write_headers(),
                     json={
                         "score": upd["score"],
+                        "score_total": upd["score_total"],
                         "score_ca": upd["score_ca"],
                         "score_sites": upd["score_sites"],
                         "score_croissance": upd["score_croissance"],
+                        "score_contact": upd["score_contact"],
+                        "score_intention": upd["score_intention"],
+                        "score_chaine": upd["score_chaine"],
                     },
                     timeout=30,
                 )
@@ -658,13 +673,28 @@ def recompute_scores(lead_ids: List[int]) -> Tuple[int, int]:
     return ok, ko
 
 
-def compute_score(lead: Dict[str, Any]) -> Tuple[int, int, int, int]:
-    """Portage Python de la fonction de scoring."""
+def compute_score(lead: Dict[str, Any]) -> Dict[str, int]:
+    """Portage Python du scoring canonical (sql/recalc_scores.sql)."""
     ca = lead.get("chiffre_affaires")
     has_ca = ca is not None and ca > 0
     g = lead.get("croissance_ca")
     has_ca_growth = g is not None
+    nb_etabs = lead.get("nb_etablissements") or 1
+    sites_ouverts = lead.get("sites_ouverts_12m") or 0
+    derniere_ouverture = lead.get("derniere_ouverture")
 
+    within_6_months = False
+    within_12_months = False
+    if derniere_ouverture:
+        try:
+            d = datetime.fromisoformat(str(derniere_ouverture).replace("Z", "+00:00"))
+            now = datetime.now(d.tzinfo) if d.tzinfo else datetime.now()
+            within_6_months = d >= now - timedelta(days=180)
+            within_12_months = d >= now - timedelta(days=365)
+        except Exception:
+            pass
+
+    # Axe CA (max 30)
     score_ca = 0
     if has_ca:
         if ca >= 5_000_000:
@@ -680,7 +710,7 @@ def compute_score(lead: Dict[str, Any]) -> Tuple[int, int, int, int]:
         else:
             score_ca = 5
 
-    nb_etabs = lead.get("nb_etablissements") or 1
+    # Axe Sites (max 35, redistribué à 60 si CA absent)
     score_sites_raw = 0
     if nb_etabs >= 10:
         score_sites_raw = 35
@@ -691,6 +721,7 @@ def compute_score(lead: Dict[str, Any]) -> Tuple[int, int, int, int]:
     elif nb_etabs >= 2:
         score_sites_raw = 12
 
+    # Axe Croissance (max 30)
     score_ca_growth = 0
     if has_ca_growth:
         if g >= 30:
@@ -701,19 +732,6 @@ def compute_score(lead: Dict[str, Any]) -> Tuple[int, int, int, int]:
             score_ca_growth = 8
         elif g >= 0:
             score_ca_growth = 4
-
-    sites_ouverts = lead.get("sites_ouverts_12m") or 0
-    derniere_ouverture = lead.get("derniere_ouverture")
-    within_6_months = False
-    within_12_months = False
-    if derniere_ouverture:
-        try:
-            d = datetime.fromisoformat(str(derniere_ouverture).replace("Z", "+00:00"))
-            now = datetime.now(d.tzinfo) if d.tzinfo else datetime.now()
-            within_6_months = d >= now - timedelta(days=180)
-            within_12_months = d >= now - timedelta(days=365)
-        except Exception:
-            pass
 
     score_ouvertures = 0
     if sites_ouverts >= 3:
@@ -740,8 +758,71 @@ def compute_score(lead: Dict[str, Any]) -> Tuple[int, int, int, int]:
         score_sites = score_sites_raw
         score_croissance = score_ca_growth + score_ouvertures + score_combo
 
-    total = min(score_ca + score_sites + score_croissance, 100)
-    return total, score_ca, score_sites, score_croissance
+    # Axe Contact (max 25)
+    score_contact = 0
+    telephone = lead.get("telephone") or ""
+    site_web = lead.get("site_web") or ""
+    email = lead.get("email") or ""
+    if telephone:
+        score_contact += 10
+    if site_web:
+        score_contact += 8
+    if email:
+        score_contact += 7
+
+    # Axe Intention (max 25)
+    score_intention = 0
+    if has_ca_growth:
+        if g >= 30:
+            score_intention += 10
+        elif g >= 15:
+            score_intention += 7
+        elif g >= 5:
+            score_intention += 4
+    if sites_ouverts >= 3:
+        score_intention += 8
+    elif sites_ouverts >= 1:
+        score_intention += 4
+    if (lead.get("nb_tenders") or 0) >= 1:
+        score_intention += 5
+    if (lead.get("nb_tender_notices") or 0) >= 1:
+        score_intention += 2
+
+    # Axe Chaîne / Franchise (max 20)
+    score_chaine = 0
+    if nb_etabs >= 10:
+        score_chaine = 15
+    elif nb_etabs >= 5:
+        score_chaine = 12
+    elif nb_etabs >= 3:
+        score_chaine = 8
+    elif nb_etabs >= 2:
+        score_chaine = 4
+    if lead.get("is_chaine"):
+        score_chaine += 5
+
+    # Score total pondéré (normalisé sur 100, aligné avec sql/recalc_scores.sql)
+    score_total = round(
+        (
+            score_ca / 30.0 * 0.30
+            + score_sites / 35.0 * 0.25
+            + score_croissance / 30.0 * 0.20
+            + score_contact / 25.0 * 0.10
+            + score_intention / 25.0 * 0.10
+            + score_chaine / 20.0 * 0.05
+        ) * 100
+    )
+
+    return {
+        "score": score_total,
+        "score_total": score_total,
+        "score_ca": score_ca,
+        "score_sites": score_sites,
+        "score_croissance": score_croissance,
+        "score_contact": score_contact,
+        "score_intention": score_intention,
+        "score_chaine": score_chaine,
+    }
 
 
 def load_last_run_date() -> str:

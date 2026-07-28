@@ -7,8 +7,8 @@ import csv
 import re
 from check_bob import normaliser_nom
 
-INPUT = "LEADS_PROKITCHES_FINAL.csv"
-OUTPUT = "spot_check_bob.csv"
+INPUT = "data/LEADS_PROKITCHES_FINAL.csv"
+OUTPUT = "data/spot_check_bob.csv"
 
 SUSPECT_PATTERNS = [
     r"\d+$",                          # se termine par un chiffre

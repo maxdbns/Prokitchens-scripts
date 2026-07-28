@@ -6,10 +6,10 @@ import csv
 import re
 from check_bob import est_dans_bob, charger_book, normaliser_nom
 
-INPUT = "leads_qualifies_enrichis.csv"
-MANUAL_CSV = "LEADS_PROKITCHES_MANUAL_REVIEW.csv"
-STRICT_CSV = "LEADS_PROKITCHES_FINAL_STRICT.csv"
-OUTPUT = "LEADS_PROKITCHES_MANUAL_REVIEW.csv"
+INPUT = "data/leads_qualifies_enrichis.csv"
+MANUAL_CSV = "data/LEADS_PROKITCHES_MANUAL_REVIEW.csv"
+STRICT_CSV = "data/LEADS_PROKITCHES_FINAL_STRICT.csv"
+OUTPUT = "data/LEADS_PROKITCHES_MANUAL_REVIEW.csv"
 
 EXCLUDED_BRANDS = {
     "MC DONALD", "MCDONALD", "BURGER KING", "KFC", "SUBWAY", "QUICK",

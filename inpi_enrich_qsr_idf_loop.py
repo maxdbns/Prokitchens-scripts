@@ -8,7 +8,7 @@ import time
 from datetime import datetime
 
 SCRIPT = "/zpool/one/maxime.debaugnies/inpi_enrich_qsr_idf.py"
-LOG_FILE = "/zpool/one/maxime.debaugnies/inpi_enrich_qsr_idf_loop.log"
+LOG_FILE = "/zpool/one/maxime.debaugnies/logs/inpi_enrich_qsr_idf_loop.log"
 
 
 def log(msg):

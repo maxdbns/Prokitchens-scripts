@@ -11,9 +11,9 @@ from datetime import datetime
 INPI_USERNAME = "maxime.debaugnies@cloudkitchens.com"
 INPI_PASSWORD = "Thomas36130!"
 INPI_BASE_URL = "https://registre-national-entreprises.inpi.fr/api"
-INPUT_CSV = "leads_final.csv"
-OUTPUT_CSV = "leads_final_croissance.csv"
-LOG_FILE = "inpi_croissance.log"
+INPUT_CSV = "data/leads_final.csv"
+OUTPUT_CSV = "data/leads_final_croissance.csv"
+LOG_FILE = "/zpool/one/maxime.debaugnies/logs/inpi_croissance.log"
 
 
 def log(msg):

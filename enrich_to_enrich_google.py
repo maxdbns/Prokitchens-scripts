@@ -13,9 +13,9 @@ import requests
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 if not GOOGLE_API_KEY:
     raise RuntimeError("Variable d'environnement GOOGLE_API_KEY requise")
-INPUT_CSV = "LEADS_PROKITCHES_TO_ENRICH.csv"
-OUTPUT_CSV = "LEADS_PROKITCHES_TO_ENRICH_ENRICHIS.csv"
-LOG_FILE = "enrich_to_enrich_google.log"
+INPUT_CSV = "data/LEADS_PROKITCHES_TO_ENRICH.csv"
+OUTPUT_CSV = "data/LEADS_PROKITCHES_TO_ENRICH_ENRICHIS.csv"
+LOG_FILE = "/zpool/one/maxime.debaugnies/logs/enrich_to_enrich_google.log"
 REQUEST_DELAY = 0.3
 
 

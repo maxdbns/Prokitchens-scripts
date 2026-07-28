@@ -18,7 +18,7 @@ QUERIES = [
     "franchises restauration rapide en croissance France",
 ]
 
-OUTPUT_CSV = "researched_chains_raw.csv"
+OUTPUT_CSV = "data/researched_chains_raw.csv"
 
 
 def search_bing(query):

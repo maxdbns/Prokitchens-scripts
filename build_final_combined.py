@@ -4,11 +4,11 @@ Combine les 3 fichiers finaux en un seul CSV avec une colonne statut.
 import csv
 
 FILES = [
-    ("LEADS_PROKITCHES_FINAL_STRICT.csv", "strict"),
-    ("LEADS_PROKITCHES_MANUAL_REVIEW.csv", "manual"),
-    ("LEADS_PROKITCHES_TO_ENRICH.csv", "to_enrich"),
+    ("data/LEADS_PROKITCHES_FINAL_STRICT.csv", "strict"),
+    ("data/LEADS_PROKITCHES_MANUAL_REVIEW.csv", "manual"),
+    ("data/LEADS_PROKITCHES_TO_ENRICH.csv", "to_enrich"),
 ]
-OUTPUT = "LEADS_PROKITCHES_FINAL.csv"
+OUTPUT = "data/LEADS_PROKITCHES_FINAL.csv"
 
 all_rows = []
 for path, status in FILES:

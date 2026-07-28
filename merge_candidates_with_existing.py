@@ -4,10 +4,10 @@ Croise les candidats Sirene avec les leads existants pour recuperer les contacts
 import csv
 from check_bob import est_dans_bob, charger_book, normaliser_nom
 
-SIRENE_CSV = "sirene_qsr_candidates.csv"
-EXISTING_CSV = "leads_manquants_salesforce.csv"
-FINAL_CSV = "leads_existing_clean.csv"
-OUTPUT = "leads_supplementaires.csv"
+SIRENE_CSV = "data/sirene_qsr_candidates.csv"
+EXISTING_CSV = "data/leads_manquants_salesforce.csv"
+FINAL_CSV = "data/leads_existing_clean.csv"
+OUTPUT = "data/leads_supplementaires.csv"
 
 # Marques a exclure explicitement
 EXCLUDED_BRANDS = {

@@ -7,8 +7,8 @@ cd "$ROOT"
 
 PID_FILE="lead_scheduler.pid"
 LOCK_FILE="lead_scheduler.lock"
-LOG_FILE="lead_scheduler.log"
-WATCHDOG_LOG="watchdog_lead_scheduler.log"
+LOG_FILE="logs/lead_scheduler.log"
+WATCHDOG_LOG="logs/watchdog_lead_scheduler.log"
 
 while true; do
     if [ -f "$PID_FILE" ]; then

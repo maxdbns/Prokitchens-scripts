@@ -10,9 +10,9 @@ from datetime import datetime
 import requests
 
 GOOGLE_API_KEY = "AIzaSyA9mLoqkEtojwJEC4jAze1jdafcKw2qH6Y"
-INPUT_CSV = "leads_qualifies.csv"
-OUTPUT_CSV = "leads_qualifies_enrichis.csv"
-LOG_FILE = "enrich_qualifies_google.log"
+INPUT_CSV = "data/leads_qualifies.csv"
+OUTPUT_CSV = "data/leads_qualifies_enrichis.csv"
+LOG_FILE = "/zpool/one/maxime.debaugnies/logs/enrich_qualifies_google.log"
 REQUEST_DELAY = 0.3
 
 

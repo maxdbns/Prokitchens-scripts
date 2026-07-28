@@ -7,9 +7,9 @@ import re
 from check_bob import est_dans_bob, charger_book, normaliser_nom
 
 FILES = [
-    "LEADS_PROKITCHES_FINAL_STRICT.csv",
-    "LEADS_PROKITCHES_MANUAL_REVIEW.csv",
-    "LEADS_PROKITCHES_TO_ENRICH.csv",
+    "data/LEADS_PROKITCHES_FINAL_STRICT.csv",
+    "data/LEADS_PROKITCHES_MANUAL_REVIEW.csv",
+    "data/LEADS_PROKITCHES_TO_ENRICH.csv",
 ]
 
 EXCLUDED_BRANDS = {
@@ -136,7 +136,7 @@ def main():
             if is_bob:
                 issues.append((path, nom, f"BOB -> {match}"))
 
-            if path != "LEADS_PROKITCHES_TO_ENRICH.csv":
+            if path != "data/LEADS_PROKITCHES_TO_ENRICH.csv":
                 if not (is_valid_phone(phone) or website):
                     issues.append((path, nom, "Contact invalide"))
 

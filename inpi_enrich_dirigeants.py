@@ -27,7 +27,7 @@ SUPABASE_TABLE = os.environ.get("SUPABASE_TABLE", "leads")
 DAILY_QUOTA = 9500
 REQUEST_DELAY = 0.35
 BATCH_SIZE = 1000
-LOG_FILE = "/zpool/one/maxime.debaugnies/inpi_enrich_dirigeants.log"
+LOG_FILE = "/zpool/one/maxime.debaugnies/logs/inpi_enrich_dirigeants.log"
 
 # NAF et zones cibles
 NAFS_CIBLES = ["56.10C", "56.21Z", "56.29B"]

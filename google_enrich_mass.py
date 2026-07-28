@@ -14,7 +14,7 @@ SUPABASE_API_KEY = "sb_publishable_a7xpn8srwByQrW1rXwpdlw_eQnwAoHT"
 BATCH_SIZE = 200
 MAX_LEADS = 10000
 REQUEST_DELAY = 0.25
-LOG_FILE = "/zpool/one/maxime.debaugnies/google_enrich_mass.log"
+LOG_FILE = "/zpool/one/maxime.debaugnies/logs/google_enrich_mass.log"
 
 headers_read = {
     "apikey": SUPABASE_API_KEY,

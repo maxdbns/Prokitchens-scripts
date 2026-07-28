@@ -15,7 +15,7 @@ NAFS = ["56.10C", "56.21Z"]
 MIN_ETABLISSEMENTS = 3
 PER_PAGE = 25
 MAX_PAGES = 10
-OUTPUT = "sirene_qsr_candidates.csv"
+OUTPUT = "data/sirene_qsr_candidates.csv"
 
 EXCLUDED_BRANDS = {
     "MC DONALD", "MCDONALD", "BURGER KING", "KFC", "SUBWAY", "QUICK",

@@ -5,8 +5,8 @@ import csv
 from check_bob import est_dans_bob, charger_book
 
 FILES = [
-    "LEADS_PROKITCHES_FINAL_STRICT.csv",
-    "LEADS_PROKITCHES_MANUAL_REVIEW.csv",
+    "data/LEADS_PROKITCHES_FINAL_STRICT.csv",
+    "data/LEADS_PROKITCHES_MANUAL_REVIEW.csv",
 ]
 
 book = charger_book()

@@ -5,8 +5,8 @@ import csv
 import re
 from check_bob import est_dans_bob, charger_book, normaliser_nom
 
-INPUT = "leads_supplementaires.csv"
-OUTPUT = "leads_supplementaires_filtered.csv"
+INPUT = "data/leads_supplementaires.csv"
+OUTPUT = "data/leads_supplementaires_filtered.csv"
 
 EXCLUDED_BRANDS = {
     "MC DONALD", "MCDONALD", "BURGER KING", "KFC", "SUBWAY", "QUICK",

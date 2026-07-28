@@ -18,7 +18,7 @@ SUPABASE_TABLE = "leads"
 DAILY_QUOTA = 9500
 REQUEST_DELAY = 0.35
 BATCH_SIZE = 1000
-LOG_FILE = "/zpool/one/maxime.debaugnies/inpi_enrich_qsr_idf.log"
+LOG_FILE = "/zpool/one/maxime.debaugnies/logs/inpi_enrich_qsr_idf.log"
 
 IDF_FILTER = "or=(code_postal.like.75*,code_postal.like.77*,code_postal.like.78*,code_postal.like.91*,code_postal.like.92*,code_postal.like.93*,code_postal.like.94*,code_postal.like.95*)"
 

@@ -111,15 +111,16 @@ UPDATE leads SET
 
 -- ─── Score total ───
 -- Poids : CA 30%, sites 25%, croissance 20%, contact 10%, intention 10%, chaîne 5%
+-- Les sous-scores sont normalisés sur 100 avant pondération pour rester sur une échelle 0-100.
 UPDATE leads SET
-  score_total = ROUND((
-    COALESCE(score_ca, 0) * 0.30
-    + COALESCE(score_sites, 0) * 0.25
-    + COALESCE(score_croissance, 0) * 0.20
-    + COALESCE(score_contact, 0) * 0.10
-    + COALESCE(score_intention, 0) * 0.10
-    + COALESCE(score_chaine, 0) * 0.05
-  )::numeric)::smallint;
+  score_total = ROUND(((
+    COALESCE(score_ca, 0) / 30.0 * 0.30
+    + COALESCE(score_sites, 0) / 35.0 * 0.25
+    + COALESCE(score_croissance, 0) / 30.0 * 0.20
+    + COALESCE(score_contact, 0) / 25.0 * 0.10
+    + COALESCE(score_intention, 0) / 25.0 * 0.10
+    + COALESCE(score_chaine, 0) / 20.0 * 0.05
+  ) * 100)::numeric)::smallint;
 
 -- ─── Mise à jour du score legacy pour compatibilité ───
 UPDATE leads SET score = score_total;

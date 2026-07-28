@@ -7,9 +7,9 @@ import csv
 import re
 from rapidfuzz import fuzz, process
 
-BOOK_CSV = "Leads auto - Sheet1.csv"
-NAMES_FILE = "chaines_candidates.txt"
-OUTPUT_CSV = "chaines_hors_bob.csv"
+BOOK_CSV = "data/Leads auto - Sheet1.csv"
+NAMES_FILE = "docs/chaines_candidates.txt"
+OUTPUT_CSV = "data/chaines_hors_bob.csv"
 
 MOTS_VIDES = {"LE", "LA", "LES", "DU", "DE", "DES", "ET", "EN", "A", "AU", "AUX", "FR", "FRANCE", "SAS", "SARL", "SASU", "EURL", "SCOP", "SCIC", "SA", "SEMS", "SEM", "SNC", "SCA"}
 MOTS_GENERIQUES = {

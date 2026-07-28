@@ -72,3 +72,11 @@ untitled.py
 lead_scheduler.pid
 lead_scheduler.lock
 watchdog_lead_scheduler.pid
+
+# Dossiers de données générées / organisées
+logs/
+data/
+archive/
+
+# Fichiers NFS temporaires
+.nfs*

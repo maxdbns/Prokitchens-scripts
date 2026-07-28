@@ -15,9 +15,9 @@ import re
 import sys
 from rapidfuzz import fuzz, process
 
-PROSPECTS_CSV = "leads_manquants_salesforce.csv"
-BOOK_CSV = "Leads auto - Sheet1.csv"
-OUTPUT_CSV = "leads_qualifies.csv"
+PROSPECTS_CSV = "data/leads_manquants_salesforce.csv"
+BOOK_CSV = "data/Leads auto - Sheet1.csv"
+OUTPUT_CSV = "data/leads_qualifies.csv"
 
 # NAF cibles : restauration rapide (QSR) et traiteurs
 NAF_CIBLES = {"56.10C", "56.21Z"}

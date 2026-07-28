@@ -14,7 +14,7 @@ SUPABASE_API_KEY = "sb_publishable_a7xpn8srwByQrW1rXwpdlw_eQnwAoHT"
 
 BATCH_SIZE = 500
 WORKERS = 8
-LOG_FILE = "/zpool/one/maxime.debaugnies/google_enrich_idf.log"
+LOG_FILE = "/zpool/one/maxime.debaugnies/logs/google_enrich_idf.log"
 
 IDF_FILTER = "or=(code_postal.like.75*,code_postal.like.77*,code_postal.like.78*,code_postal.like.91*,code_postal.like.92*,code_postal.like.93*,code_postal.like.94*,code_postal.like.95*)"
 

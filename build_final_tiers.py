@@ -7,9 +7,9 @@ Genere les deux fichiers finaux a partir de leads_final_croissance.csv :
 import csv
 import re
 
-INPUT_CSV = "leads_final_croissance.csv"
-STRICT_CSV = "LEADS_PROKITCHES_FINAL_STRICT.csv"
-MANUAL_CSV = "LEADS_PROKITCHES_MANUAL_REVIEW.csv"
+INPUT_CSV = "data/leads_final_croissance.csv"
+STRICT_CSV = "data/LEADS_PROKITCHES_FINAL_STRICT.csv"
+MANUAL_CSV = "data/LEADS_PROKITCHES_MANUAL_REVIEW.csv"
 
 SELECTED_COLS = [
     "Nom", "SIREN", "Ville", "Code Postal", "NAF",

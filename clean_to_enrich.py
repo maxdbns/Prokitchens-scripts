@@ -6,8 +6,8 @@ import csv
 import re
 from check_bob import charger_book, est_dans_bob, normaliser_nom
 
-INPUT = "LEADS_PROKITCHES_TO_ENRICH.csv"
-OUTPUT = "LEADS_PROKITCHES_TO_ENRICH_CLEAN.csv"
+INPUT = "data/LEADS_PROKITCHES_TO_ENRICH.csv"
+OUTPUT = "data/LEADS_PROKITCHES_TO_ENRICH_CLEAN.csv"
 
 EXCLUDED_SIRENS = {
     "378390033",  # MONOP'DAILY (Monoprix)

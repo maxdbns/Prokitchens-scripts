@@ -6,8 +6,8 @@ import csv
 import re
 from check_bob import est_dans_bob, charger_book, normaliser_nom
 
-INPUT = "sirene_qsr_candidates.csv"
-OUTPUT = "leads_to_enrich_4sites.csv"
+INPUT = "data/sirene_qsr_candidates.csv"
+OUTPUT = "data/leads_to_enrich_4sites.csv"
 
 EXCLUDED_SIRENS = {
     "378390033", "311976419", "452421332", "813725868", "801761800", "702045519",

@@ -7,13 +7,15 @@ ce script tourne en daemon via nohup et déclenche les scripts d'enrichissement
 aux horaires programmés.
 
 Tâches :
-- 03:00  daily_sirene_delta.py          delta Sirene (nouveaux / maj / fermetures)
+- 02:30  daily_sirene_delta.py          delta Sirene (nouveaux / maj / fermetures)
 - 03:30  dimanche  run-insee-sync.sh    sync INSEE multi-sites (nouvelles enseignes / expansions, manuel/hebdo)
 - 04:00  backfill-etablissements.py     réparation des établissements manquants
+- 04:30  fix-lead-names.sh              correction automatique des noms de leads
 - 05:00  enrich_contact.py              enrichissement email/téléphone depuis le web
 - 06:00  dimanche  inpi_enrich_dirigeants.py   dirigeants INPI
 - 07:00  dimanche  cleanup_closed_sirets.py    nettoyage SIREN sans établissement actif
 - 08:00  dimanche  cleanup_closed_leads.py     nettoyage SIREN radiés/cessés
+- 09:00  trigger_vercel_cron.py         déclenche les notifications Vercel après enrichissement
 
 Lancement :
     cd /zpool/one/maxime.debaugnies
@@ -39,7 +41,7 @@ ROOT_DIR = Path("/zpool/one/maxime.debaugnies")
 APP_DIR = ROOT_DIR / "prokitchens-app"
 ENV_FILE = APP_DIR / ".env"
 
-LOG_FILE = ROOT_DIR / "lead_scheduler.log"
+LOG_FILE = ROOT_DIR / "logs" / "lead_scheduler.log"
 PID_FILE = ROOT_DIR / "lead_scheduler.pid"
 LOCK_FILE = ROOT_DIR / "lead_scheduler.lock"
 
@@ -70,6 +72,12 @@ SCHEDULE = [
     (8, 0, 6, "cleanup_closed_leads",
      [sys.executable, str(ROOT_DIR / "cleanup_closed_leads.py")], ROOT_DIR,
      "Nettoyage SIREN radiés/cessés"),
+    (9, 0, None, "vercel_notifications",
+     [sys.executable, str(ROOT_DIR / "trigger_vercel_cron.py")], ROOT_DIR,
+     "Déclenche les notifications Vercel après l'enrichissement"),
+    (10, 30, None, "revalidate_google",
+     [sys.executable, str(ROOT_DIR / "trigger_revalidate_google.py")], ROOT_DIR,
+     "Re-validation Google / site web pour les leads existants faiblement appariés"),
 ]
 
 CHECK_INTERVAL_SECONDS = 60
@@ -159,7 +167,7 @@ def run_task(name: str, command: List[str], cwd: Path, env: dict) -> Tuple[int, 
     log.info(f"▶ Démarrage {name}: {' '.join(command)}")
     started = datetime.datetime.now()
 
-    task_log = ROOT_DIR / f"lead_scheduler_{name}_{started.strftime('%Y%m%d_%H%M%S')}.log"
+    task_log = ROOT_DIR / "logs" / f"lead_scheduler_{name}_{started.strftime('%Y%m%d_%H%M%S')}.log"
 
     try:
         with open(task_log, "w") as out:

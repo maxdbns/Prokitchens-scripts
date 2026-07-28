@@ -6,10 +6,10 @@ import csv
 from check_bob import est_dans_bob, charger_book
 
 INPUTS = [
-    ("LEADS_PROKITCHES_FINAL_STRICT.csv", "strict"),
-    ("LEADS_PROKITCHES_MANUAL_REVIEW.csv", "manual"),
+    ("data/LEADS_PROKITCHES_FINAL_STRICT.csv", "strict"),
+    ("data/LEADS_PROKITCHES_MANUAL_REVIEW.csv", "manual"),
 ]
-OUTPUT = "leads_existing_clean.csv"
+OUTPUT = "data/leads_existing_clean.csv"
 
 # Marques connues a exclure meme si le matching automatique ne les detecte pas
 # (noms d'entites juridiques differentes du nom commercial)

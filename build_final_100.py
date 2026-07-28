@@ -9,17 +9,17 @@ import re
 from check_bob import est_dans_bob, charger_book, normaliser_nom
 
 SOURCES = [
-    ("leads_existing_clean.csv", None),
-    ("leads_supplementaires_filtered.csv", "supplementaire"),
-    ("leads_final_pool.csv", "enrichi"),
+    ("data/leads_existing_clean.csv", None),
+    ("data/leads_supplementaires_filtered.csv", "supplementaire"),
+    ("data/leads_final_pool.csv", "enrichi"),
 ]
 
-SIRENE_CSV = "sirene_qsr_candidates.csv"
+SIRENE_CSV = "data/sirene_qsr_candidates.csv"
 
-STRICT_CSV = "LEADS_PROKITCHES_FINAL_STRICT.csv"
-MANUAL_CSV = "LEADS_PROKITCHES_MANUAL_REVIEW.csv"
-TO_ENRICH_CSV = "LEADS_PROKITCHES_TO_ENRICH.csv"
-TO_ENRICH_4SITES = "leads_to_enrich_4sites.csv"
+STRICT_CSV = "data/LEADS_PROKITCHES_FINAL_STRICT.csv"
+MANUAL_CSV = "data/LEADS_PROKITCHES_MANUAL_REVIEW.csv"
+TO_ENRICH_CSV = "data/LEADS_PROKITCHES_TO_ENRICH.csv"
+TO_ENRICH_4SITES = "data/leads_to_enrich_4sites.csv"
 
 SELECTED_COLS = [
     "Nom", "SIREN", "Ville", "Code Postal", "NAF",

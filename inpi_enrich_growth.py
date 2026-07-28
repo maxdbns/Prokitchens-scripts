@@ -22,7 +22,7 @@ SUPABASE_TABLE = "leads"
 DAILY_QUOTA = 9500
 REQUEST_DELAY = 0.35
 BATCH_SIZE = 500
-LOG_FILE = "/zpool/one/maxime.debaugnies/inpi_enrich_growth.log"
+LOG_FILE = "/zpool/one/maxime.debaugnies/logs/inpi_enrich_growth.log"
 
 
 def log(msg):

@@ -5,8 +5,8 @@ Garder uniquement ceux dont Google Places confirme une activite de restauration.
 
 import csv
 
-INPUT_CSV = "leads_qualifies_enrichis.csv"
-OUTPUT_CSV = "leads_final.csv"
+INPUT_CSV = "data/leads_qualifies_enrichis.csv"
+OUTPUT_CSV = "data/leads_final.csv"
 
 # Types Google Places qui qualifient une activite de restauration
 POSITIVE_TYPES = {

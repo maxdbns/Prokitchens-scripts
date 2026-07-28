@@ -23,7 +23,7 @@ SUPABASE_TABLE = "leads"
 BATCH_SIZE = 100
 PAGE_SIZE = 500
 REQUEST_DELAY = 0.5
-LOG_FILE = "/zpool/one/maxime.debaugnies/enrich_effectif_sirene.log"
+LOG_FILE = "/zpool/one/maxime.debaugnies/logs/enrich_effectif_sirene.log"
 
 TRANCHES = {
     "00": "0 salarié",

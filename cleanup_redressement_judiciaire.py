@@ -16,7 +16,7 @@ BODACC_DATASET = "annonces-commerciales"
 
 BATCH_SIZE = 80
 REQUEST_DELAY = 0.8
-LOG_FILE = "/zpool/one/maxime.debaugnies/cleanup_redressement_judiciaire.log"
+LOG_FILE = "/zpool/one/maxime.debaugnies/logs/cleanup_redressement_judiciaire.log"
 
 
 def log(msg):

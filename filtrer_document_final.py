@@ -12,8 +12,8 @@ Criteres :
 import csv
 import re
 
-INPUT_CSV = "leads_final_croissance.csv"
-OUTPUT_CSV = "LEADS_PROKITCHES_FINAL.csv"
+INPUT_CSV = "data/leads_final_croissance.csv"
+OUTPUT_CSV = "data/LEADS_PROKITCHES_FINAL.csv"
 
 POSITIVE_TYPES = {
     "restaurant", "meal_delivery", "meal_takeaway", "cafe", "bakery", "food"
