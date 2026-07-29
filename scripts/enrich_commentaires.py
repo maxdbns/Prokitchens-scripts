@@ -47,6 +47,7 @@ def get_id_token(env):
 
 
 def main():
+    full_sync = "--all" in sys.argv
     env = load_env()
     supa = env["NEXT_PUBLIC_SUPABASE_URL"].rstrip("/")
     skey = env["SUPABASE_SERVICE_ROLE_KEY"]
@@ -55,19 +56,34 @@ def main():
     token = get_id_token(env)
     ah = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
+    # Mode quotidien : seulement les recherches jamais enrichies
+    # (commentaires_enrichis_at NULL = nouvelles de la dernière sync).
+    # Mode --all : tout re-traiter (rattrapage). Si la colonne de suivi n'existe
+    # pas encore (migration non appliquée), on bascule en mode --all legacy.
+    tracking = not full_sync
+    filtre = "commentaires_enrichis_at=is.null&" if tracking else ""
     rows = []
     offset = 0
     while True:
-        batch = requests.get(
+        r = requests.get(
             f"{supa}/rest/v1/profoods_demandes_clients"
-            f"?select=id_annonce,commentaire,commentaire_zones&offset={offset}&limit=1000",
+            f"?select=id_annonce,commentaire,commentaire_zones&{filtre}offset={offset}&limit=1000",
             headers=sh,
             timeout=30,
-        ).json()
+        )
+        if r.status_code != 200 and tracking:
+            print("colonne commentaires_enrichis_at absente -> mode --all", flush=True)
+            tracking = False
+            filtre = ""
+            offset = 0
+            rows = []
+            continue
+        batch = r.json()
         rows.extend(batch)
         if len(batch) < 1000:
             break
         offset += 1000
+    print(f"{len(rows)} recherche(s) à enrichir ({'toutes' if not tracking else 'nouvelles uniquement'})", flush=True)
 
     def fetch(pid):
         base = pid[:20]
@@ -89,11 +105,14 @@ def main():
             return pid, r, True
         return pid, None, False
 
-    def patch(pid, comment, loc_comment):
+    def patch(pid, comment, loc_comment, stamp):
+        payload = {"commentaire": comment, "commentaire_zones": loc_comment}
+        if stamp:
+            payload["commentaires_enrichis_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         r = requests.patch(
             f"{supa}/rest/v1/profoods_demandes_clients?id_annonce=eq.{pid}",
             headers={**sh, "Content-Type": "application/json", "Prefer": "return=minimal"},
-            json={"commentaire": comment, "commentaire_zones": loc_comment},
+            json=payload,
             timeout=30,
         )
         return r.status_code in (200, 204)
@@ -110,12 +129,16 @@ def main():
             d = resp.json()
             comment = (d.get("comment") or "").strip() or None
             loc_comment = (d.get("locations_comment") or "").strip() or None
-            if (comment is not None or loc_comment is not None) and (
+            content_changed = (comment is not None or loc_comment is not None) and (
                 comment != (row.get("commentaire") or None)
                 or loc_comment != (row.get("commentaire_zones") or None)
-            ):
-                if patch(pid, comment, loc_comment):
-                    updated += 1
+            )
+            # En mode suivi on PATCH même sans commentaire : le timestamp évite
+            # de re-solliciter l'API chaque jour pour une recherche sans contenu.
+            if content_changed or tracking:
+                if patch(pid, comment, loc_comment, stamp=tracking):
+                    if content_changed:
+                        updated += 1
                 else:
                     errors += 1
         time.sleep(0.4)
