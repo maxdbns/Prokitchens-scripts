@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import pandas as pd
@@ -38,15 +39,19 @@ def main() -> None:
         if pd.notna(x) else False
     )
 
-    for col in ("adresse_brute", "lien_gmaps", "owner"):
+    for col in ("adresse_brute", "lien_gmaps", "owner", "prospects"):
         if col not in df.columns:
             df[col] = None
 
-    biens = df[["id_bien", "adresse_ville", "code_postal", "surface_totale", "loyer_cible", "a_une_extraction", "adresse_brute", "lien_gmaps", "owner"]].to_dict(orient="records")
+    biens = df[["id_bien", "adresse_ville", "code_postal", "surface_totale", "loyer_cible", "a_une_extraction", "adresse_brute", "lien_gmaps", "owner", "prospects"]].to_dict(orient="records")
     for b in biens:
         for col in ("adresse_brute", "lien_gmaps", "owner"):
             if b[col] is not None and str(b[col]) == "nan":
                 b[col] = None
+        try:
+            b["prospects"] = json.loads(b["prospects"]) if b["prospects"] and str(b["prospects"]) != "nan" else []
+        except (json.JSONDecodeError, TypeError):
+            b["prospects"] = []
 
     print(f"[INFO] Push de {len(biens)} biens vers {API_URL}")
     resp = requests.post(API_URL, json={"demandes": [], "biens": biens}, timeout=120)

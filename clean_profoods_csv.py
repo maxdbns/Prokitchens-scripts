@@ -1,4 +1,5 @@
 import glob
+import json
 import re
 import pandas as pd
 
@@ -57,6 +58,21 @@ def clean_profoods_csv(source_path: str, output_path: str) -> pd.DataFrame:
         gmaps = str(row[("Lien GMAPS", "Unnamed: 6_level_1")]) if pd.notna(row[("Lien GMAPS", "Unnamed: 6_level_1")]) else ""
         owner = str(row[("Unnamed: 23_level_0", "Owner")]).strip() if pd.notna(row[("Unnamed: 23_level_0", "Owner")]) else ""
 
+        prospects = []
+        for k in range(10):
+            base = 25 + 4 * k  # Prospect #k+1 : Nom, POC, Statut, Observations
+            if base + 3 >= len(row):
+                break
+            nom = row.iloc[base]
+            if pd.isna(nom) or not str(nom).strip():
+                continue
+            prospects.append({
+                "nom": str(nom).strip(),
+                "poc": str(row.iloc[base + 1]).strip() if pd.notna(row.iloc[base + 1]) else "",
+                "statut": str(row.iloc[base + 2]).strip() if pd.notna(row.iloc[base + 2]) else "",
+                "observations": str(row.iloc[base + 3]).strip() if pd.notna(row.iloc[base + 3]) else "",
+            })
+
         if not ville and not cp:
             continue
 
@@ -71,6 +87,7 @@ def clean_profoods_csv(source_path: str, output_path: str) -> pd.DataFrame:
             "adresse_brute": adresse.strip(),
             "lien_gmaps": gmaps.strip(),
             "owner": owner,
+            "prospects": json.dumps(prospects, ensure_ascii=False),
         })
 
     out_df = pd.DataFrame(out_rows)
