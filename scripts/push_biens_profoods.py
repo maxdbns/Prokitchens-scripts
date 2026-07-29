@@ -38,7 +38,15 @@ def main() -> None:
         if pd.notna(x) else False
     )
 
-    biens = df[["id_bien", "adresse_ville", "code_postal", "surface_totale", "loyer_cible", "a_une_extraction"]].to_dict(orient="records")
+    for col in ("adresse_brute", "lien_gmaps", "owner"):
+        if col not in df.columns:
+            df[col] = None
+
+    biens = df[["id_bien", "adresse_ville", "code_postal", "surface_totale", "loyer_cible", "a_une_extraction", "adresse_brute", "lien_gmaps", "owner"]].to_dict(orient="records")
+    for b in biens:
+        for col in ("adresse_brute", "lien_gmaps", "owner"):
+            if b[col] is not None and str(b[col]) == "nan":
+                b[col] = None
 
     print(f"[INFO] Push de {len(biens)} biens vers {API_URL}")
     resp = requests.post(API_URL, json={"demandes": [], "biens": biens}, timeout=120)

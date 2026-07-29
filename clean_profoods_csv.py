@@ -55,6 +55,7 @@ def clean_profoods_csv(source_path: str, output_path: str) -> pd.DataFrame:
         extraction = has_extraction(row[("Extraction", "Diamètre (mm)")])
         adresse = str(row[("Adresse", "Unnamed: 5_level_1")]) if pd.notna(row[("Adresse", "Unnamed: 5_level_1")]) else ""
         gmaps = str(row[("Lien GMAPS", "Unnamed: 6_level_1")]) if pd.notna(row[("Lien GMAPS", "Unnamed: 6_level_1")]) else ""
+        owner = str(row[("Unnamed: 23_level_0", "Owner")]).strip() if pd.notna(row[("Unnamed: 23_level_0", "Owner")]) else ""
 
         if not ville and not cp:
             continue
@@ -69,6 +70,7 @@ def clean_profoods_csv(source_path: str, output_path: str) -> pd.DataFrame:
             "a_une_extraction": extraction,
             "adresse_brute": adresse.strip(),
             "lien_gmaps": gmaps.strip(),
+            "owner": owner,
         })
 
     out_df = pd.DataFrame(out_rows)
