@@ -12,7 +12,7 @@ Tâches :
 - 04:00  backfill-etablissements.py     réparation des établissements manquants
 - 04:30  fix-lead-names.sh              correction automatique des noms de leads
 - 05:00  enrich_contact.py              enrichissement email/téléphone depuis le web
-- 06:00  dimanche  inpi_enrich_dirigeants.py   dirigeants INPI
+- 06:00  inpi_enrich_dirigeants.py   dirigeants INPI (quotidien, ~3h30, timeout 5h)
 - 07:00  dimanche  cleanup_closed_sirets.py    nettoyage SIREN sans établissement actif
 - 08:00  dimanche  cleanup_closed_leads.py     nettoyage SIREN radiés/cessés
 - 09:00  trigger_vercel_cron.py         déclenche les notifications Vercel après enrichissement
@@ -66,7 +66,10 @@ SCHEDULE = [
     (7, 0, None, "profoods_enrich_enseignes",
      [sys.executable, str(ROOT_DIR / "scripts" / "enrich_enseignes.py")], ROOT_DIR,
      "Noms d'enseigne ProFoods (après la sync Vercel UnEmplacement de 5h30)"),
-    (6, 0, 6, "inpi_enrich_dirigeants",
+    (7, 30, None, "profoods_enrich_commentaires",
+     [sys.executable, str(ROOT_DIR / "scripts" / "enrich_commentaires.py")], ROOT_DIR,
+     "Commentaires des recherches ProFoods (critères + précisions zones)"),
+    (6, 0, None, "inpi_enrich_dirigeants",
      [sys.executable, str(ROOT_DIR / "inpi_enrich_dirigeants.py")], ROOT_DIR,
      "Enrichissement dirigeants INPI"),
     (7, 0, 6, "cleanup_closed_sirets",
@@ -184,10 +187,12 @@ def run_task(name: str, command: List[str], cwd: Path, env: dict) -> Tuple[int, 
                 stdout=out,
                 stderr=subprocess.STDOUT,
             )
+            # L'enrichissement dirigeants INPI épuise le quota journalier (~3h30)
+            task_timeout = 5 * 3600 if name == "inpi_enrich_dirigeants" else 3600
             try:
-                rc = proc.wait(timeout=3600)  # 1h max par tâche
+                rc = proc.wait(timeout=task_timeout)
             except subprocess.TimeoutExpired:
-                log.warning(f"  {name} dépasse 1h, on tue le process")
+                log.warning(f"  {name} dépasse {task_timeout // 3600}h, on tue le process")
                 proc.kill()
                 rc = -1
     except Exception as e:
