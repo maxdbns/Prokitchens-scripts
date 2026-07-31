@@ -28,10 +28,11 @@ def load_env_file(path: Path) -> dict:
 
 
 def main():
-    env: dict = {}
+    # Les fichiers .env priment sur os.environ : le scheduler parent propage
+    # un environnement figé à son démarrage (valeurs potentiellement périmées).
+    env: dict = dict(os.environ)
     for env_file in [".env", ".env.local", ".env.production.local"]:
         env.update(load_env_file(APP_DIR / env_file))
-    env.update(os.environ)
 
     cron_secret = env.get("CRON_SECRET")
     site_url = env.get("NEXT_PUBLIC_SITE_URL") or env.get("VERCEL_URL")
