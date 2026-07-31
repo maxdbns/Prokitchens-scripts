@@ -29,6 +29,12 @@ temps réel par `/api/profoods/matching` à chaque requête.
 - **Biens** : la source de vérité est le Google Sheet ProFoods ; l'Apps Script
   `scripts/profoods_sheets_sync_appscript.js` le pousse toutes les 15 min vers
   `/api/profoods/biens/sync` (auth `PROFOODS_SHEETS_SECRET` côté Vercel).
+  - Diagnostic rapide si les biens ne se mettent plus à jour :
+    `curl -X POST https://prokitchens-three.vercel.app/api/profoods/biens/sync -d '{"csv":"a"}' -H "Content-Type: application/json"`
+    → 500 = secret absent côté Vercel ; 401 = endpoint OK, vérifier le déclencheur
+    Apps Script (Horloge) et que le SECRET du script = PROFOODS_SHEETS_SECRET.
+  - L'Apps Script écrit l'heure de la dernière sync dans un onglet "Sync Log"
+    du sheet et envoie un email d'alerte en cas d'échec (ALERT_EMAIL).
 - **Enrichissements** : n'enrichissent que les nouvelles recherches (pas de
   re-traitement de l'historique chaque jour).
 
