@@ -100,7 +100,7 @@ def fetch_leads(limit: int) -> List[Dict[str, Any]]:
 
     # Syntaxe PostgREST : and=(or(dept1,dept2,...),code_naf.in.(...),dirigeant_nom.is.null,...)
     and_filter = (
-        f"and=(or({dept_or}),"
+        f"(or({dept_or}),"
         f"code_naf.in.({','.join(NAFS_CIBLES)}),"
         f"dirigeant_nom.is.null,"
         f"or(inpi_dirigeants_failed.is.null,inpi_dirigeants_failed.lt.{thirty_days_ago}))"

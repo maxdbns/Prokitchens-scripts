@@ -20,7 +20,7 @@ from playwright.sync_api import sync_playwright
 EMAIL = os.environ["UNEMPLACEMENT_EMAIL"]
 PASSWORD = os.environ["UNEMPLACEMENT_PASSWORD"]
 
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "recon"))
 from test_unemplacement_api import get_id_token, fetch_prospections  # noqa: E402
 MAP_URL = "https://app.unemplacement.com/prospection_map/{region}/0"
 MAX_SCROLLS = 60
@@ -93,18 +93,25 @@ def collect_dom_titles(page, region):
 
 
 def supabase_update_enseigne(pid, enseigne):
-    r = requests.patch(
-        f"{SUPABASE_URL}/rest/v1/profoods_demandes_clients?id_annonce=eq.{pid}",
-        headers={
-            "apikey": SERVICE_KEY,
-            "Authorization": f"Bearer {SERVICE_KEY}",
-            "Content-Type": "application/json",
-            "Prefer": "return=minimal",
-        },
-        json={"enseigne": enseigne},
-        timeout=30,
-    )
-    return r.status_code in (200, 204)
+    for attempt in range(3):
+        try:
+            r = requests.patch(
+                f"{SUPABASE_URL}/rest/v1/profoods_demandes_clients?id_annonce=eq.{pid}",
+                headers={
+                    "apikey": SERVICE_KEY,
+                    "Authorization": f"Bearer {SERVICE_KEY}",
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal",
+                },
+                json={"enseigne": enseigne},
+                timeout=30,
+            )
+            return r.status_code in (200, 204)
+        except requests.exceptions.RequestException:
+            if attempt == 2:
+                return False
+            time.sleep(2 * (attempt + 1))
+    return False
 
 
 def main():
