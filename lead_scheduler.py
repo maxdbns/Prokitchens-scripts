@@ -33,6 +33,9 @@ import time
 import fcntl
 import datetime
 import logging
+import json
+import urllib.request
+import urllib.error
 from pathlib import Path
 from typing import List, Tuple, Optional
 
@@ -218,6 +221,18 @@ def should_run_now(hour: int, minute: int, weekday: Optional[int]) -> bool:
     return True
 
 
+def last_run_date(name: str) -> Optional[datetime.date]:
+    """Renvoie la date du dernier run réussi, ou None."""
+    marker = ROOT_DIR / f".lead_scheduler_last_run_{name}"
+    if not marker.exists():
+        return None
+    try:
+        text = marker.read_text().strip()
+        return datetime.datetime.strptime(text.split("_")[0], "%Y-%m-%d").date()
+    except Exception:
+        return None
+
+
 def already_ran_today(name: str, hour: int, minute: int) -> bool:
     """Vérifie si la tâche a déjà été lancée aujourd'hui à l'heure donnée."""
     marker = ROOT_DIR / f".lead_scheduler_last_run_{name}"
@@ -237,6 +252,71 @@ def mark_ran(name: str, hour: int, minute: int):
     marker.write_text(f"{today}_{hour:02d}:{minute:02d}")
 
 
+def send_health_alert(overdue_tasks: list, env: dict):
+    """Envoie une alerte email via l'endpoint Vercel /api/health/scheduler."""
+    site_url = env.get("NEXT_PUBLIC_SITE_URL") or env.get("VERCEL_URL", "")
+    cron_secret = env.get("CRON_SECRET", "")
+    if not site_url or not cron_secret:
+        log.warning("Alerte santé : NEXT_PUBLIC_SITE_URL ou CRON_SECRET manquant, pas d'email envoyé")
+        return
+
+    site_url = site_url.rstrip("/")
+    if not site_url.startswith("http"):
+        site_url = "https://" + site_url
+    url = f"{site_url}/api/health/scheduler"
+
+    payload = json.dumps({"overdue": overdue_tasks}).encode()
+    req = urllib.request.Request(
+        url, data=payload, method="POST",
+        headers={
+            "Authorization": f"Bearer {cron_secret}",
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            body = resp.read().decode()
+            log.info(f"Alerte santé envoyée : {body}")
+    except Exception as e:
+        log.error(f"Alerte santé échec : {e}")
+
+
+def catch_up(env: dict):
+    """Rattrapage au démarrage : exécute les tâches qui n'ont pas tourné depuis >24h."""
+    today = datetime.datetime.now().date()
+    overdue = []
+
+    for hour, minute, weekday, name, command, cwd, desc in SCHEDULE:
+        if weekday is not None and today.weekday() != weekday:
+            continue
+        last = last_run_date(name)
+        if last is None or (today - last).days >= 1:
+            overdue.append((hour, minute, weekday, name, command, cwd, desc))
+
+    if not overdue:
+        log.info("Rattrapage : toutes les tâches sont à jour ✓")
+        return
+
+    log.info(f"Rattrapage : {len(overdue)} tâche(s) en retard, exécution immédiate")
+    alert_tasks = []
+    for hour, minute, weekday, name, command, cwd, desc in overdue:
+        last = last_run_date(name)
+        retard = (today - last).days if last else "jamais"
+        log.info(f"  ⏰ {name} — dernier run : {last or 'jamais'} (retard : {retard} jour(s))")
+        alert_tasks.append({
+            "name": name,
+            "last_run": str(last) if last else None,
+            "retard_jours": retard,
+            "status": "never" if last is None else "overdue",
+        })
+
+    send_health_alert(alert_tasks, env)
+
+    for hour, minute, weekday, name, command, cwd, desc in overdue:
+        mark_ran(name, hour, minute)
+        run_task(name, command, cwd, env)
+
+
 # ─── Main loop ───
 def main():
     log.info("=" * 60)
@@ -248,6 +328,9 @@ def main():
     if not env.get("SUPABASE_SERVICE_ROLE_KEY"):
         log.error("SUPABASE_SERVICE_ROLE_KEY manquante. Arrêt.")
         sys.exit(1)
+
+    # Rattrapage des tâches manquées (crash nocturne, redémarrage tardif, etc.)
+    catch_up(env)
 
     # Optionnel : lancer immédiatement le backfill si le fichier de flag existe
     if (ROOT_DIR / ".lead_scheduler_run_now").exists():
