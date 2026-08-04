@@ -5,8 +5,8 @@
 // Remplace ALERT_EMAIL par l'adresse qui doit recevoir les alertes d'échec.
 
 const ENDPOINT = "https://prokitchens-three.vercel.app/api/profoods/biens/sync";
-const SECRET = "CHANGE_MOI";
-const ALERT_EMAIL = "CHANGE_MOI@cloudkitchens.com";
+const SECRET = "COLLER_LA_VALEUR_PROFOODS_SHEETS_SECRET_DE_VERCEL";
+const ALERT_EMAIL = "maxime.debaugnies@gmail.com";
 
 function toCsv_(values) {
   return values

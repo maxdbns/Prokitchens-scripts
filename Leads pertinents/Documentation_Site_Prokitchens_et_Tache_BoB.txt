@@ -1,0 +1,246 @@
+================================================================================
+PROKITCHENS SALES HUB - DOCUMENTATION FONCTIONNELLE
+================================================================================
+
+1. QU'EST-CE QUE LE SITE PROKITCHENS ?
+--------------------------------------
+
+Prokitchens Sales Hub est un CRM de prospection commerciale dedie a la restauration
+et a l'hotellerie (restauration rapide, traiteurs, restauration collective, dark
+kitchens, commissaries / CPU). Il permet a l'equipe commerciale de Prokitchens de
+detecter, qualifier et suivre des comptes prospect puis de les convertir en
+opportunites et en clients.
+
+Technologies : Next.js 14, React 18, Tailwind CSS, Supabase, Vercel.
+Authentification : mode admin solo actuellement, avec roles prevus admin / sales / viewer.
+
+
+2. PAGES ET NAVIGATION PRINCIPALES
+-----------------------------------
+
+- Dashboard : pipeline commercial, avis d'appels d'offres ouverts, taches en retard,
+  nouveaux leads sur 7 jours.
+
+- Leads : liste paginee de prospection avec filtres avances (departement, code NAF,
+  nombre de sites, ouverture recente, favoris, segment, region, assignation, recherche),
+  tri, export CSV et synchronisation INSEE.
+
+- Opportunites : leads chauds detectes par ouverture recente de point de vente.
+
+- Carte : carte interactive (Leaflet) des points de vente avec selection multi-leads
+  et filtres.
+
+- Taches : suivi des actions commerciales assignees.
+
+- Notifications : centre de signaux regroupes par semaine, avec marquage comme lu.
+
+- Appels d'offres : marches publics attribues et avis de marches (BOAMP/TED).
+
+- Avis et calendrier : calendrier des avis de marches publics.
+
+- Admin : dedoublonnage de leads et gestion des webhooks.
+
+
+3. GESTION DES LEADS
+--------------------
+
+Le moteur de prospection s'appuie sur les donnees INSEE Sirene et les enrichit via :
+- Pappers (informations financieres et dirigeants)
+- Google Places (telephone, site web, adresse)
+- INPI (effectifs, croissance)
+
+Chaque lead est evalue par un score 0-100 base sur trois axes :
+- Score CA (chiffre d'affaires)
+- Score Sites (nombre d'etablissements)
+- Score Croissance / Ouvertures recentes
+
+Segmentation automatique des leads :
+- Enterprise : grandes chaines / groupes
+- Growth : enseignes en developpement
+- Independent : independants / mono-site
+- Startup : concepts en creation / recente
+
+Filtrage possible par code NAF : QSR (56.10C), restauration traditionnelle (56.10A),
+traiteurs (56.21Z), restauration collective (56.29B).
+
+
+4. FICHE LEAD DETAILLEE
+-----------------------
+
+La page de detail d'un lead (accessible par SIREN) permet de :
+- Consulter et modifier les informations : telephone, email, site web, activite
+  (delivery / CPU), locations monde/Europe, sites de production.
+- Ajouter des alias / surnoms pour ameliorer le matching.
+- Gerer des notes, taches et journal d'activite.
+- Visualiser les etablissements sur une carte.
+- Lier les unites legales d'une meme enseigne via les groupes de leads.
+- Detecter les doublons potentiels.
+- Enrichir le lead avec Google.
+- Generer des emails de prospection via l'assistant IA (Groq).
+
+
+5. APPELS D'OFFRES ET MARCHES PUBLICS
+-------------------------------------
+
+Le site integre un module de marches publics dedie a la restauration :
+- Ingestion des marches attribues depuis la DECP.
+- Ingestion des avis de marches depuis BOAMP et TED.
+- Scoring automatique des marches selon le montant, la duree, la geographie et la
+  temporalite.
+- Classification par type d'opportunite : dark kitchen, CPU, les deux, aucun.
+- Matching automatique des adjudicataires avec les leads existants.
+- Filtres par type, score, montant, dates, departement et lead connu.
+
+
+6. API ET AUTOMATISATION
+------------------------
+
+L'application expose de nombreux endpoints API :
+- Leads : liste, detail, notes, taches, tags, activite, enrichissement, IA, doublons,
+  groupes.
+- Tenders : ingestion, liste, notices, qualification.
+- Referentiel : utilisateurs, regions, tags, statistiques.
+- Dashboard, notifications, taches, carte.
+- Admin : synchronisation INSEE, dedoublonnage, test email, webhooks.
+- Crons : taches planifiees quotidiennes et par etapes.
+
+Les taches planifiees (cron) incluent :
+- Scan des notifications leads (nouvelles ouvertures, nouveaux leads, croissance, etc.)
+- Synchronisation INSEE
+- Reparation des etablissements
+- Mise a jour de la croissance
+- Enrichissement Google
+- Cleanup des leads fermes
+- Ingestion des marches attribues et des avis de marches locaux
+- Envoi d'emails recapitulatifs via Resend
+- Dispatch des webhooks
+
+
+7. DATA QUALITY ET OUTILS ADMIN
+--------------------------------
+
+- Deduplication : detection par SIREN, nom + code postal, nom + ville, similarite
+  Jaro-Winkler ; fusion ou ignore des doublons.
+- Groupes de leads : detection en masse des unites legales d'une meme enseigne.
+- Webhooks : souscriptions, gestion et dispatch d'evenements (lead.assigned,
+  lead.status_changed, tender_notice.hot, etc.).
+- Cleanup : verification periodique des leads sans etablissement actif et marquage
+  comme fermes.
+
+
+8. BASE DE DONNEES
+------------------
+
+Tables principales dans Supabase :
+- leads : compte principal (SIREN, nom, CA, nombre d'etablissements, score, segment,
+  coordonnees, etc.)
+- etablissements : points de vente lies a un lead (SIRET, adresse, latitude,
+  longitude, date d'ouverture/fermeture, etc.)
+- notifications : signaux commerciaux genere automatiquement
+- tasks : taches commerciales assignees
+- lead_groups : liens entre unites legales d'une meme enseigne
+- tenders : marches publics attribues
+- tender_notices : avis de marches publics
+- users, tags, activity, notes, etc.
+
+
+9. CE QUE L'ON ESSAIE DE FAIRE MAINTENANT : LISTE DE COMPTES POUR LE BOB
+-------------------------------------------------------------------------
+
+Objectif : fournir a ton manager une liste de comptes a ajouter au BoB (Book of Business)
+sur Salesforce.
+
+Le BoB = les comptes que les commerciaux travaillent activement ou qui sont deja clients.
+La demande : trouver des comptes present sur Salesforce, pas encore dans le BoB, mais
+interessants a prospecter.
+
+Definition de "bon prospect" retenue avec le manager :
+- Avoir ouvert un nouveau site / point de vente dans les 12 derniers mois
+- Etre situe dans les zones de chalandise de Prokitchens : Ile-de-France, Marseille,
+  Lyon, Lille (ou proche autour).
+
+
+9.1 METHODE UTILISEE
+--------------------
+
+On part des donnees du site Prokitchens (Supabase) car elles suivent deja les ouvertures
+recentes de points de vente. On applique les filtres suivants :
+
+- leads avec sites_ouverts_12m > 0 (au moins une ouverture dans les 12 derniers mois)
+- zone dans {Ile-de-France, Marseille, Lyon, Lille}
+- pas deja dans le BOB (Book of Business) Salesforce
+- pas deja dans le BOB en raison du fuzzy matching sur le nom
+
+Pour chaque lead valide, on verifie s'il existe deja dans Salesforce (complet) a l'aide
+d'un matching fuzzy sur le nom (rapidfuzz, token_set_ratio >= 85). On exclut les noms
+generiques (SUSHI, PIZZA, etc.) et les noms codes internes (REF, CODE INTERNE, KDSUSHI...).
+
+
+9.2 FICHIERS GENERES
+--------------------
+
+Dans le dossier /zpool/one/maxime.debaugnies/Leads pertinents/ :
+
+- generer_prospects_ouvertures_recentes_zones.py : script principal qui recupere les leads
+  App avec ouvertures recentes dans les zones cibles, exclut le BOB et verifie Salesforce.
+
+- prospects_ouvertures_recentes_zones.csv : liste COMPLETE de 10 785 leads avec ouvertures
+  recentes dans les zones cibles, hors BOB. Colonne "Dans Salesforce" indique si le compte
+  existe deja dans Salesforce.
+
+- prospects_deja_dans_salesforce_hors_bob.csv : 424 comptes deja presents dans Salesforce,
+  hors BOB, avec ouvertures recentes dans les zones cibles. C'est la reponse directe a la
+  demande du manager.
+
+- top_100_prospects_ouvertures_recentes_zones.csv : top 100 de tous les prospects (deja ou
+  non dans Salesforce), trie par nombre d'ouvertures recentes et score App.
+
+- top_100_a_creer_dans_salesforce.csv : top 100 des prospects interessants qui ne sont pas
+  encore dans Salesforce et qu'il faudrait y creer.
+
+
+9.3 RESULTAT FINAL A ENVOYER AU MANAGER
+----------------------------------------
+
+Le fichier principal a envoyer est :
+prospects_deja_dans_salesforce_hors_bob.csv
+
+Il contient 424 comptes deja presents dans Salesforce, pas dans le BOB, et qui ont ouvert
+au moins un point de vente dans les 12 derniers mois dans les zones cibles (IDF, Marseille,
+Lyon, Lille). Ces comptes sont prets a etre ajoutes au BOB sans creation manuelle.
+
+Top 10 prioritaires (nombre d'ouvertures recentes et score App eleve) :
+1. LES EXPERIENCES DE TAILLEVENT : 7 ouvertures, score 47, IDF
+2. KUMO : 6 ouvertures, score 69, IDF
+3. SOMETS : 6 ouvertures, score 61, IDF
+4. CHATIME : 4 ouvertures, score 40, IDF
+5. THE FRENCH BASTARDS : 2 ouvertures, score 81, IDF
+6. CAFE JOYEUX : 2 ouvertures, score 68, IDF
+7. TOTEM : 2 ouvertures, score 68, IDF
+8. PLANET : 2 ouvertures, Marseille
+9. O'TACOS : 2 ouvertures, IDF
+10. SIDI BOU S : 2 ouvertures, Lyon
+
+Le fichier complementaire a consulter :
+top_100_a_creer_dans_salesforce.csv
+contient 100 prospects qui ne sont pas encore dans Salesforce mais qui ont ouvert recemment
+et meritent d'etre crees pour enrichir le pipeline.
+
+
+10. LIMITES CONNUES
+-------------------
+
+- Le matching entre les comptes Salesforce et les leads de l'app se fait par nom (fuzzy
+  matching). Il peut manquer des correspondances si les noms sont tres differents.
+- L'app ne contient pas encore tous les comptes Salesforce. Beaucoup de comptes
+  Salesforce n'ont pas de donnees dans l'app.
+- Le BoB fourni etait une selection des comptes travailles quotidiennement par les sales,
+  pas forcement le BoB complet. Certains comptes clients (ex : Black & White burger)
+  peuvent etre absents de cette selection.
+- Certains comptes internationaux avec operations en France peuvent avoir des emails ou
+  telephones etrangers. Ils ont ete filtres pour garder uniquement les comptes francais.
+
+
+================================================================================
+FIN DE LA DOCUMENTATION
+================================================================================

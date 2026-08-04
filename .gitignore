@@ -81,3 +81,9 @@ archive/
 
 # Fichiers NFS temporaires
 .nfs*
+
+# SSH keys
+.ssh/
+
+# Scraping data (fichiers volumineux)
+scraping/
