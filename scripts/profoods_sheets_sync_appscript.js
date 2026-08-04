@@ -1,11 +1,12 @@
 // À coller dans Google Sheets : Extensions → Apps Script → coller → Enregistrer.
 // Puis : Horloge (Déclencheurs) → Ajouter un déclencheur → syncBiensToSite /
 // événement "Minuteur" → intervalle "Toutes les 15 minutes".
-// Remplace SECRET par la valeur de PROFOODS_SHEETS_SECRET configurée dans Vercel.
+// Le endpoint accepte PROFOODS_SHEETS_SECRET ou CRON_SECRET comme Bearer token.
+// Coller la valeur du CRON_SECRET depuis les env vars Vercel.
 // Remplace ALERT_EMAIL par l'adresse qui doit recevoir les alertes d'échec.
 
 const ENDPOINT = "https://prokitchens-three.vercel.app/api/profoods/biens/sync";
-const SECRET = "COLLER_LA_VALEUR_PROFOODS_SHEETS_SECRET_DE_VERCEL";
+const SECRET = "COLLER_CRON_SECRET_DE_VERCEL";
 const ALERT_EMAIL = "maxime.debaugnies@gmail.com";
 
 function toCsv_(values) {
