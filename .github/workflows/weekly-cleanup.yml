@@ -1,0 +1,62 @@
+name: "Weekly: INSEE Sync + Cleanup"
+
+on:
+  schedule:
+    - cron: "30 3 * * 0"
+  workflow_dispatch:
+
+jobs:
+  insee-sync:
+    runs-on: self-hosted
+    timeout-minutes: 60
+    env:
+      CI: "true"
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      INSEE_API_KEY: ${{ secrets.INSEE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: maxdbns/Prokitchens
+          token: ${{ secrets.PROKITCHENS_APP_PAT }}
+          path: prokitchens-app
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: cd prokitchens-app && npm ci --ignore-scripts
+      - run: cd prokitchens-app && npx tsx scripts/run-insee-sync.ts
+
+  cleanup-closed-sirets:
+    needs: insee-sync
+    if: always()
+    runs-on: self-hosted
+    timeout-minutes: 120
+    env:
+      CI: "true"
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_API_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      INSEE_API_KEY: ${{ secrets.INSEE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install --quiet requests
+      - run: python3 cleanup_closed_sirets.py
+
+  cleanup-closed-leads:
+    needs: cleanup-closed-sirets
+    if: always()
+    runs-on: self-hosted
+    timeout-minutes: 120
+    env:
+      CI: "true"
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_API_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      INSEE_API_KEY: ${{ secrets.INSEE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install --quiet requests
+      - run: python3 cleanup_closed_leads.py

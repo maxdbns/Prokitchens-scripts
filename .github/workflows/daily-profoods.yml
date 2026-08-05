@@ -1,0 +1,64 @@
+name: "Daily: ProFoods + Notifications"
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+jobs:
+  enrich-enseignes:
+    runs-on: self-hosted
+    timeout-minutes: 60
+    env:
+      CI: "true"
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      UNEMPLACEMENT_EMAIL: ${{ secrets.UNEMPLACEMENT_EMAIL }}
+      UNEMPLACEMENT_PASSWORD: ${{ secrets.UNEMPLACEMENT_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install --quiet requests playwright
+      - run: python3 -m playwright install --with-deps chromium
+      - run: python3 scripts/enrich_enseignes.py
+
+  enrich-commentaires:
+    needs: enrich-enseignes
+    if: always()
+    runs-on: self-hosted
+    timeout-minutes: 180
+    env:
+      CI: "true"
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      UNEMPLACEMENT_EMAIL: ${{ secrets.UNEMPLACEMENT_EMAIL }}
+      UNEMPLACEMENT_PASSWORD: ${{ secrets.UNEMPLACEMENT_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install --quiet requests
+      - run: python3 scripts/enrich_commentaires.py
+
+  vercel-notifications:
+    needs: enrich-commentaires
+    if: always()
+    runs-on: self-hosted
+    timeout-minutes: 5
+    env:
+      CI: "true"
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 trigger_vercel_cron.py
+
+  revalidate-google:
+    needs: vercel-notifications
+    if: always()
+    runs-on: self-hosted
+    timeout-minutes: 5
+    env:
+      CI: "true"
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 trigger_revalidate_google.py

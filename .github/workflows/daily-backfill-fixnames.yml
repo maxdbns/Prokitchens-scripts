@@ -1,0 +1,45 @@
+name: "Daily: Backfill + Fix Names"
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+jobs:
+  backfill-etablissements:
+    runs-on: self-hosted
+    timeout-minutes: 30
+    continue-on-error: true
+    env:
+      CI: "true"
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      INSEE_API_KEY: ${{ secrets.INSEE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: maxdbns/Prokitchens
+          token: ${{ secrets.PROKITCHENS_APP_PAT }}
+          path: prokitchens-app
+      - run: python3 prokitchens-app/scripts/backfill-etablissements.py
+
+  fix-lead-names:
+    needs: backfill-etablissements
+    if: always()
+    runs-on: self-hosted
+    timeout-minutes: 10
+    env:
+      CI: "true"
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: maxdbns/Prokitchens
+          token: ${{ secrets.PROKITCHENS_APP_PAT }}
+          path: prokitchens-app
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: cd prokitchens-app && npm ci --ignore-scripts
+      - run: cd prokitchens-app && npx tsx scripts/fix-lead-names.ts
