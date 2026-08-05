@@ -44,12 +44,14 @@ REGIONS = [
 ]
 
 # Charge SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY depuis prokitchens-app/.env
-ENV_PATH = os.path.join(os.path.dirname(__file__), "..", "prokitchens-app", ".env")
-for line in open(ENV_PATH):
-    line = line.strip()
-    if line and not line.startswith("#") and "=" in line:
-        k, v = line.split("=", 1)
-        os.environ.setdefault(k.strip(), v.strip())
+if not os.environ.get("CI"):
+    ENV_PATH = os.path.join(os.path.dirname(__file__), "..", "prokitchens-app", ".env")
+    if os.path.exists(ENV_PATH):
+        for line in open(ENV_PATH):
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip())
 SUPABASE_URL = os.environ["NEXT_PUBLIC_SUPABASE_URL"].rstrip("/")
 SERVICE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 

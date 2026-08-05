@@ -23,7 +23,7 @@ MAX_RETRIES = 4
 
 def load_env():
     env = dict(os.environ)
-    if os.path.exists(ENV_PATH):
+    if not os.environ.get("CI") and os.path.exists(ENV_PATH):
         for line in open(ENV_PATH):
             line = line.strip()
             if line and not line.startswith("#") and "=" in line:

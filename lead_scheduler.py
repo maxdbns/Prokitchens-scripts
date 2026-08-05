@@ -190,8 +190,12 @@ def run_task(name: str, command: List[str], cwd: Path, env: dict) -> Tuple[int, 
                 stdout=out,
                 stderr=subprocess.STDOUT,
             )
-            # L'enrichissement dirigeants INPI épuise le quota journalier (~3h30)
-            task_timeout = 5 * 3600 if name == "inpi_enrich_dirigeants" else 3600
+            if name == "inpi_enrich_dirigeants":
+                task_timeout = 5 * 3600
+            elif name == "profoods_enrich_commentaires":
+                task_timeout = 3 * 3600
+            else:
+                task_timeout = 3600
             try:
                 rc = proc.wait(timeout=task_timeout)
             except subprocess.TimeoutExpired:
