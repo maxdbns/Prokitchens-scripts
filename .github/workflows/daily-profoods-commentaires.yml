@@ -1,0 +1,21 @@
+name: "Daily: ProFoods Commentaires"
+
+on:
+  schedule:
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+
+jobs:
+  enrich-commentaires:
+    runs-on: self-hosted
+    timeout-minutes: 180
+    env:
+      CI: "true"
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      UNEMPLACEMENT_EMAIL: ${{ secrets.UNEMPLACEMENT_EMAIL }}
+      UNEMPLACEMENT_PASSWORD: ${{ secrets.UNEMPLACEMENT_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install --quiet requests
+      - run: python3 scripts/enrich_commentaires.py

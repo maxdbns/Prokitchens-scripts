@@ -1,4 +1,4 @@
-name: "Daily: ProFoods + Notifications"
+name: "Daily: ProFoods Enseignes + Notifications"
 
 on:
   schedule:
@@ -21,24 +21,8 @@ jobs:
       - run: python3 -m playwright install --with-deps chromium
       - run: python3 scripts/enrich_enseignes.py
 
-  enrich-commentaires:
-    needs: enrich-enseignes
-    if: always()
-    runs-on: self-hosted
-    timeout-minutes: 180
-    env:
-      CI: "true"
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      UNEMPLACEMENT_EMAIL: ${{ secrets.UNEMPLACEMENT_EMAIL }}
-      UNEMPLACEMENT_PASSWORD: ${{ secrets.UNEMPLACEMENT_PASSWORD }}
-    steps:
-      - uses: actions/checkout@v4
-      - run: pip install --quiet requests
-      - run: python3 scripts/enrich_commentaires.py
-
   vercel-notifications:
-    needs: enrich-commentaires
+    needs: enrich-enseignes
     if: always()
     runs-on: self-hosted
     timeout-minutes: 5
