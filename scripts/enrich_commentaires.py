@@ -5,6 +5,10 @@ liste : "comment" (critères détaillés) et "locations_comment" (précisions su
 les zones visées). Un appel par recherche — trop lourd pour le cron Vercel,
 donc script serveur lancé quotidiennement par lead_scheduler.py.
 
+L'API a un rate limit agressif (429 après ~200 appels, cooldown de plusieurs
+heures). Le script utilise un backoff exponentiel long (jusqu'à 5 min) et
+re-obtient un token Firebase quand le rate limit persiste.
+
 Creds via variables d'environnement (fichier .env du repo prokitchens-app) :
   UNEMPLACEMENT_EMAIL / UNEMPLACEMENT_PASSWORD
   NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY
@@ -18,7 +22,9 @@ import requests
 ENV_PATH = "/zpool/one/maxime.debaugnies/prokitchens-app/.env"
 FIREBASE_KEY = "AIzaSyBrV4UUSZyoEmUGeWYOT8JmVNCNps0-tBk"
 DETAILS_URL = "https://api.app.unemplacement.com/member_api/prospection_details"
-MAX_RETRIES = 4
+MAX_RETRIES = 6
+DELAY_BETWEEN_CALLS = 2.0
+CONSECUTIVE_429_ABORT = 20
 
 
 def load_env():
@@ -54,12 +60,7 @@ def main():
     sh = {"apikey": skey, "Authorization": f"Bearer {skey}"}
 
     token = get_id_token(env)
-    ah = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
-    # Mode quotidien : seulement les recherches jamais enrichies
-    # (commentaires_enrichis_at NULL = nouvelles de la dernière sync).
-    # Mode --all : tout re-traiter (rattrapage). Si la colonne de suivi n'existe
-    # pas encore (migration non appliquée), on bascule en mode --all legacy.
     tracking = not full_sync
     filtre = "commentaires_enrichis_at=is.null&" if tracking else ""
     rows = []
@@ -85,22 +86,23 @@ def main():
         offset += 1000
     print(f"{len(rows)} recherche(s) à enrichir ({'toutes' if not tracking else 'nouvelles uniquement'})", flush=True)
 
-    def fetch(pid):
+    def fetch(pid, auth_headers):
         base = pid[:20]
-        # L'API bride vite (429) : retry avec backoff, sinon on perd des commentaires
         for attempt in range(MAX_RETRIES):
             try:
                 r = requests.post(
                     DETAILS_URL,
-                    headers=ah,
+                    headers=auth_headers,
                     json={"prospection_id": base, "prospection_map_id": pid},
                     timeout=30,
                 )
             except requests.RequestException:
-                time.sleep(3 * (attempt + 1))
+                time.sleep(5 * (attempt + 1))
                 continue
             if r.status_code == 429:
-                time.sleep(3 * (attempt + 1))
+                wait = min(300, 10 * (2 ** attempt))
+                print(f"    429 rate limit, waiting {wait}s (attempt {attempt+1}/{MAX_RETRIES})...", flush=True)
+                time.sleep(wait)
                 continue
             return pid, r, True
         return pid, None, False
@@ -118,14 +120,25 @@ def main():
         return r.status_code in (200, 204)
 
     updated = errors = api_failures = 0
-    # Traitement séquentiel cadencé + PATCH immédiat : l'API bride fortement
-    # dès qu'on parallélise, et les mises à jour restent visibles en cours de route.
+    consecutive_429 = 0
+    ah = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
     for i, row in enumerate(rows):
         pid = row["id_annonce"]
-        pid, resp, ok = fetch(pid)
+        pid, resp, ok = fetch(pid, ah)
+
         if not ok or resp is None or resp.status_code != 200:
             api_failures += 1
+            is_429 = resp is not None and resp.status_code == 429 if resp else not ok
+            if is_429:
+                consecutive_429 += 1
+                if consecutive_429 >= CONSECUTIVE_429_ABORT:
+                    print(f"ABORT: {CONSECUTIVE_429_ABORT} 429 consécutifs — rate limit persistant, arrêt.", flush=True)
+                    break
+            else:
+                consecutive_429 = 0
         else:
+            consecutive_429 = 0
             d = resp.json()
             comment = (d.get("comment") or "").strip() or None
             loc_comment = (d.get("locations_comment") or "").strip() or None
@@ -133,15 +146,13 @@ def main():
                 comment != (row.get("commentaire") or None)
                 or loc_comment != (row.get("commentaire_zones") or None)
             )
-            # En mode suivi on PATCH même sans commentaire : le timestamp évite
-            # de re-solliciter l'API chaque jour pour une recherche sans contenu.
             if content_changed or tracking:
                 if patch(pid, comment, loc_comment, stamp=tracking):
                     if content_changed:
                         updated += 1
                 else:
                     errors += 1
-        time.sleep(0.4)
+        time.sleep(DELAY_BETWEEN_CALLS)
         if (i + 1) % 50 == 0:
             print(f"{i + 1}/{len(rows)} updated={updated} api_failures={api_failures}", flush=True)
 
