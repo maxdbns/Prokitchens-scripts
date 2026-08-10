@@ -7,7 +7,7 @@ on:
 
 jobs:
   ingest-news:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       CI: "true"
@@ -17,5 +17,8 @@ jobs:
       NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - run: pip install --quiet requests googlenewsdecoder
       - run: python3 scripts/ingest_news.py

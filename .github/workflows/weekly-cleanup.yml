@@ -7,7 +7,7 @@ on:
 
 jobs:
   insee-sync:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
       CI: "true"
@@ -32,7 +32,7 @@ jobs:
   cleanup-closed-sirets:
     needs: insee-sync
     if: always()
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
       CI: "true"
@@ -43,13 +43,16 @@ jobs:
       INSEE_API_KEY: ${{ secrets.INSEE_API_KEY }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - run: pip install --quiet requests
       - run: python3 cleanup_closed_sirets.py
 
   cleanup-closed-leads:
     needs: cleanup-closed-sirets
     if: always()
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
       CI: "true"
@@ -60,5 +63,8 @@ jobs:
       INSEE_API_KEY: ${{ secrets.INSEE_API_KEY }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - run: pip install --quiet requests
       - run: python3 cleanup_closed_leads.py

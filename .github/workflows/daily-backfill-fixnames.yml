@@ -7,7 +7,7 @@ on:
 
 jobs:
   backfill-etablissements:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     continue-on-error: true
     env:
@@ -21,12 +21,15 @@ jobs:
           repository: maxdbns/Prokitchens
           token: ${{ secrets.PROKITCHENS_APP_PAT }}
           path: prokitchens-app
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - run: python3 prokitchens-app/scripts/backfill-etablissements.py
 
   fix-lead-names:
     needs: backfill-etablissements
     if: always()
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       CI: "true"

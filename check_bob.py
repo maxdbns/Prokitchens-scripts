@@ -7,6 +7,8 @@ import csv
 import re
 from rapidfuzz import fuzz, process
 
+import os
+
 BOOK_CSV = "data/Leads auto - Sheet1.csv"
 NAMES_FILE = "docs/chaines_candidates.txt"
 OUTPUT_CSV = "data/chaines_hors_bob.csv"
@@ -47,7 +49,31 @@ def normaliser_nom(name):
     return name
 
 
+def _telecharger_csv_supabase():
+    """Télécharge le CSV BOB depuis Supabase Storage si absent localement."""
+    supabase_url = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_API_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    if not supabase_url or not supabase_key:
+        return False
+    try:
+        import requests
+        url = f"{supabase_url}/storage/v1/object/public/data/Leads%20auto%20-%20Sheet1.csv"
+        resp = requests.get(url, headers={"Authorization": f"Bearer {supabase_key}"}, timeout=30)
+        if resp.status_code == 200:
+            os.makedirs("data", exist_ok=True)
+            with open(BOOK_CSV, "wb") as f:
+                f.write(resp.content)
+            return True
+    except Exception:
+        pass
+    return False
+
+
 def charger_book():
+    if not os.path.exists(BOOK_CSV):
+        if not _telecharger_csv_supabase():
+            print(f"[check_bob] WARNING: {BOOK_CSV} introuvable et téléchargement Supabase échoué — filtrage BOB désactivé")
+            return []
     noms = set()
     with open(BOOK_CSV, "r", encoding="utf-8") as f:
         for row in csv.DictReader(f):

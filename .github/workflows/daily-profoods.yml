@@ -7,7 +7,7 @@ on:
 
 jobs:
   enrich-enseignes:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
       CI: "true"
@@ -17,6 +17,9 @@ jobs:
       UNEMPLACEMENT_PASSWORD: ${{ secrets.UNEMPLACEMENT_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - run: pip install --quiet requests playwright
       - run: python3 -m playwright install --with-deps chromium
       - run: python3 scripts/enrich_enseignes.py
@@ -24,7 +27,7 @@ jobs:
   vercel-notifications:
     needs: enrich-enseignes
     if: always()
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
       CI: "true"
@@ -32,12 +35,15 @@ jobs:
       NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - run: python3 trigger_vercel_cron.py
 
   revalidate-google:
     needs: vercel-notifications
     if: always()
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
       CI: "true"
@@ -45,4 +51,7 @@ jobs:
       NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - run: python3 trigger_revalidate_google.py

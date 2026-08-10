@@ -71,8 +71,9 @@ ETAB_UPSERT_BATCH_SIZE = 10
 LEAD_UPDATE_BATCH_SIZE = 50
 CLOSED_DELETE_BATCH_SIZE = 10
 REQUEST_DELAY = 0.5
-LOG_FILE = "/zpool/one/maxime.debaugnies/logs/daily_sirene_delta.log"
-MARKER_FILE = "/zpool/one/maxime.debaugnies/.daily_sirene_delta_last_run"
+os.makedirs("logs", exist_ok=True)
+LOG_FILE = os.path.join("logs", "daily_sirene_delta.log")
+MARKER_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".daily_sirene_delta_last_run")
 
 EXCLUDED_BRANDS = {
     "MC DONALD", "MCDONALD", "BURGER KING", "KFC", "SUBWAY", "QUICK",
@@ -822,8 +823,39 @@ def compute_score(lead: Dict[str, Any]) -> Dict[str, int]:
     }
 
 
+def _supabase_get_state(key: str) -> Optional[str]:
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/scheduler_state?key=eq.{key}&select=value"
+        resp = requests.get(url, headers={
+            "apikey": SUPABASE_API_KEY,
+            "Authorization": f"Bearer {SUPABASE_API_KEY}",
+        }, timeout=10)
+        if resp.status_code == 200:
+            rows = resp.json()
+            if rows:
+                return rows[0]["value"]
+    except Exception:
+        pass
+    return None
+
+
+def _supabase_set_state(key: str, value: str):
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/scheduler_state"
+        requests.post(url, headers={
+            "apikey": SUPABASE_API_KEY,
+            "Authorization": f"Bearer {SUPABASE_API_KEY}",
+            "Content-Type": "application/json",
+            "Prefer": "resolution=merge-duplicates",
+        }, json={"key": key, "value": value}, timeout=10)
+    except Exception:
+        pass
+
+
 def load_last_run_date() -> str:
-    """Charge la date de dernier run depuis un fichier, ou hier par défaut."""
+    remote = _supabase_get_state("daily_sirene_delta_last_run")
+    if remote:
+        return remote
     if os.path.exists(MARKER_FILE):
         with open(MARKER_FILE, "r") as f:
             return f.read().strip()
@@ -832,9 +864,12 @@ def load_last_run_date() -> str:
 
 
 def save_last_run_date(date_str: str):
-    """Sauvegarde la date de run pour la prochaine exécution."""
-    with open(MARKER_FILE, "w") as f:
-        f.write(date_str)
+    _supabase_set_state("daily_sirene_delta_last_run", date_str)
+    try:
+        with open(MARKER_FILE, "w") as f:
+            f.write(date_str)
+    except OSError:
+        pass
 
 
 def main():
