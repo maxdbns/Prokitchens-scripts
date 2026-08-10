@@ -2,7 +2,7 @@ name: "Weekly: INSEE Sync + Cleanup"
 
 on:
   schedule:
-    - cron: "30 3 * * 0"
+    - cron: "0 3 * * 0"
   workflow_dispatch:
 
 jobs:
@@ -14,8 +14,10 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       INSEE_API_KEY: ${{ secrets.INSEE_API_KEY }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}
+      GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
     steps:
-      - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
           repository: maxdbns/Prokitchens

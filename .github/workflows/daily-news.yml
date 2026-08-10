@@ -1,0 +1,21 @@
+name: "Daily: News"
+
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+jobs:
+  ingest-news:
+    runs-on: self-hosted
+    timeout-minutes: 30
+    env:
+      CI: "true"
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install --quiet requests googlenewsdecoder
+      - run: python3 scripts/ingest_news.py
