@@ -87,3 +87,11 @@ archive/
 
 # Scraping data (fichiers volumineux)
 scraping/
+
+# GitHub Actions runner (binaires + config locale)
+actions-runner/
+actions-runner.pid
+
+# Artefacts de build / test
+.next/
+test_email.html
