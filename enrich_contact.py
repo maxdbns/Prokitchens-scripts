@@ -27,7 +27,7 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUP
 SUPABASE_API_KEY = os.environ.get("SUPABASE_API_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 SUPABASE_TABLE = os.environ.get("SUPABASE_TABLE", "leads")
 
-MAX_LEADS = 200
+MAX_LEADS = 500
 BATCH_SIZE = 50
 REQUEST_TIMEOUT = 10
 REQUEST_DELAY = 0.5
@@ -35,7 +35,9 @@ os.makedirs("logs", exist_ok=True)
 LOG_FILE = os.path.join("logs", "enrich_contact.log")
 
 EMAIL_REGEX = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", re.IGNORECASE)
-PHONE_REGEX = re.compile(r"[\+]?[0-9\s\.\-\(\)]{8,}")
+PHONE_REGEX = re.compile(
+    r"(?:\+33[\s\.\-]?|0)[1-9](?:[\s\.\-]?\d{2}){4}"
+)
 
 # Exclusions d'emails génériques à ne pas garder
 EXCLUDED_EMAILS = {
@@ -91,12 +93,15 @@ def extract_emails(text: str) -> Set[str]:
 
 
 def extract_phones(text: str) -> Set[str]:
-    """Extrait les téléphones potentiels d'un texte."""
+    """Extrait les téléphones français d'un texte et les normalise."""
     found = set()
     for match in PHONE_REGEX.findall(text):
         digits = re.sub(r"\D", "", match)
-        if len(digits) >= 10:
-            found.add(match.strip())
+        if digits.startswith("33"):
+            digits = "0" + digits[2:]
+        if len(digits) == 10 and digits[0] == "0" and digits[1] in "123456789":
+            formatted = " ".join(digits[i:i+2] for i in range(0, 10, 2))
+            found.add(formatted)
     return found
 
 

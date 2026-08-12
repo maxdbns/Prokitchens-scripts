@@ -1,0 +1,32 @@
+name: "Daily: Google Places Enrich"
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+    inputs:
+      batch_size:
+        description: "Nombre de leads à traiter"
+        required: false
+        default: "500"
+        type: string
+
+jobs:
+  google-enrich:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      CI: "true"
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_API_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+      GOOGLE_ENRICH_BATCH: ${{ github.event.inputs.batch_size || '500' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet requests
+      - run: python3 google_enrich_daily.py
