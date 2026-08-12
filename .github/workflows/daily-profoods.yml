@@ -16,8 +16,8 @@ jobs:
       UNEMPLACEMENT_EMAIL: ${{ secrets.UNEMPLACEMENT_EMAIL }}
       UNEMPLACEMENT_PASSWORD: ${{ secrets.UNEMPLACEMENT_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: pip install --quiet requests playwright
@@ -34,8 +34,8 @@ jobs:
       CRON_SECRET: ${{ secrets.CRON_SECRET }}
       NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: python3 trigger_vercel_cron.py
@@ -50,8 +50,8 @@ jobs:
       CRON_SECRET: ${{ secrets.CRON_SECRET }}
       NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: python3 trigger_revalidate_google.py
