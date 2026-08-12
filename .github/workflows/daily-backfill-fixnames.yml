@@ -17,14 +17,10 @@ jobs:
       INSEE_API_KEY: ${{ secrets.INSEE_API_KEY }}
     steps:
       - uses: actions/checkout@v5
-        with:
-          repository: maxdbns/Prokitchens
-          token: ${{ secrets.PROKITCHENS_APP_PAT }}
-          path: prokitchens-app
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - run: python3 prokitchens-app/scripts/backfill-etablissements.py
+      - run: python3 backfill_etablissements.py
 
   fix-lead-names:
     needs: backfill-etablissements
@@ -37,12 +33,8 @@ jobs:
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
-          repository: maxdbns/Prokitchens
-          token: ${{ secrets.PROKITCHENS_APP_PAT }}
-          path: prokitchens-app
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 20
-      - run: cd prokitchens-app && npm ci --ignore-scripts
-      - run: cd prokitchens-app && npx tsx scripts/fix-lead-names.ts
+          python-version: "3.12"
+      - run: pip install --quiet requests
+      - run: python3 fix_lead_names.py
