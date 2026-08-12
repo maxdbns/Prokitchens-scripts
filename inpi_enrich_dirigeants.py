@@ -217,6 +217,17 @@ def main():
     log(f"Zones : {', '.join(sorted(ZONES_DEPTS))} | NAF : {', '.join(NAFS_CIBLES)}")
     log("=" * 60)
 
+    missing = [name for name, val in [
+        ("INPI_USERNAME", INPI_USERNAME),
+        ("INPI_PASSWORD", INPI_PASSWORD),
+        ("SUPABASE_URL / NEXT_PUBLIC_SUPABASE_URL", SUPABASE_URL),
+        ("SUPABASE_API_KEY / SUPABASE_SERVICE_ROLE_KEY", SUPABASE_API_KEY),
+    ] if not val]
+    if missing:
+        log(f"ERREUR FATALE : secrets manquants ou vides : {', '.join(missing)}")
+        log("→ Les définir dans Settings → Secrets and variables → Actions du repo GitHub.")
+        sys.exit(1)
+
     token = inpi_login()
     headers = {"Authorization": f"Bearer {token}"}
 
