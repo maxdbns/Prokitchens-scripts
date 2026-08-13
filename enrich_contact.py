@@ -14,6 +14,9 @@ import os
 import sys
 import re
 import requests
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from run_guard import warn_if_zero
 import time
 from urllib.parse import urljoin, urlparse
 from datetime import datetime
@@ -31,6 +34,7 @@ MAX_LEADS = 500
 BATCH_SIZE = 50
 REQUEST_TIMEOUT = 10
 REQUEST_DELAY = 0.5
+MAX_WORKERS = 8
 os.makedirs("logs", exist_ok=True)
 LOG_FILE = os.path.join("logs", "enrich_contact.log")
 
@@ -230,7 +234,7 @@ def patch_lead(siren: str, data: Dict[str, Any]) -> bool:
 def main():
     log("=" * 60)
     log("Enrichissement des contacts (email + téléphone)")
-    log(f"Max leads : {MAX_LEADS}")
+    log(f"Max leads : {MAX_LEADS} | Workers : {MAX_WORKERS}")
     log("=" * 60)
 
     leads = fetch_leads_to_enrich(MAX_LEADS)
@@ -240,17 +244,16 @@ def main():
         log("Aucun lead à enrichir. Fin.")
         return
 
-    enriched_count = 0
-    email_count = 0
-    phone_count = 0
+    counters = {"enriched": 0, "email": 0, "phone": 0}
+    lock = threading.Lock()
 
-    for i, lead in enumerate(leads, 1):
+    def process(i: int, lead: Dict[str, Any]) -> None:
         siren = lead.get("siren", "")
         nom = lead.get("nom", "?")[:40]
         site_web = lead.get("site_web", "")
 
         if not site_web:
-            continue
+            return
 
         log(f"[{i}/{len(leads)}] {nom} -> {site_web[:50]}")
 
@@ -258,21 +261,31 @@ def main():
             result = enrich_from_website(site_web)
         except Exception as e:
             log(f"  Erreur enrichissement {siren}: {e}")
-            continue
+            return
 
         if result:
-            enriched_count += 1
-            if "email" in result:
-                email_count += 1
-            if "telephone" in result:
-                phone_count += 1
+            with lock:
+                counters["enriched"] += 1
+                if "email" in result:
+                    counters["email"] += 1
+                if "telephone" in result:
+                    counters["phone"] += 1
             log(f"  ✓ {result.get('email', '')} | {result.get('telephone', '')}")
             patch_lead(siren, result)
 
         time.sleep(REQUEST_DELAY)
 
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+        list(pool.map(lambda t: process(*t), enumerate(leads, 1)))
+
+    enriched_count = counters["enriched"]
+    email_count = counters["email"]
+    phone_count = counters["phone"]
+
     log("=" * 60)
     log(f"TERMINÉ : {enriched_count}/{len(leads)} leads enrichis")
+    if leads:
+        warn_if_zero("Enrich contact : leads enrichis", enriched_count)
     log(f"  Emails trouvés : {email_count}")
     log(f"  Téléphones trouvés : {phone_count}")
     log("=" * 60)

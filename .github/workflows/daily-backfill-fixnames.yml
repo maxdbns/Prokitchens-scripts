@@ -21,6 +21,11 @@ jobs:
         with:
           python-version: "3.12"
       - run: python3 backfill_etablissements.py
+      - if: failure()
+        run: python3 scripts/notify_workflow_failure.py
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}
 
   fix-lead-names:
     needs: backfill-etablissements
@@ -38,3 +43,8 @@ jobs:
           python-version: "3.12"
       - run: pip install --quiet requests
       - run: python3 fix_lead_names.py
+      - if: failure()
+        run: python3 scripts/notify_workflow_failure.py
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}

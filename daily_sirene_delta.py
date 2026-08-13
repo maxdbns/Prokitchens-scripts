@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any, Set, Tuple, Optional
 
 import prokitchens_env
+from run_guard import warn_if_zero
 prokitchens_env.load_env()
 
 from check_bob import est_dans_bob, charger_book, normaliser_nom
@@ -1025,6 +1026,9 @@ def main():
     log(f"  Etablissements : upsert={ok_upsert}, fermés supprimés={ok_del}")
     log(f"  Refresh agrégats : {'OK' if refresh_ok else 'ÉCHEC'}")
     log(f"  Scores : mis à jour={ok_score}, échecs={ko_score}")
+
+    warn_if_zero("Sirene delta : nouveaux leads", len(new_siren_ids))
+    warn_if_zero("Sirene delta : établissements upsertés", ok_upsert)
 
     if not refresh_ok or ko_score > 0 or ko_upsert > 0 or ko_del > 0:
         log("  Des erreurs ont été détectées ; la date de dernier run n'est PAS sauvegardée.")

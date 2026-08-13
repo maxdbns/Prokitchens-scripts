@@ -1,4 +1,5 @@
 import os, urllib.request, urllib.parse, json, time
+from run_guard import warn_if_zero
 
 URL = os.environ["NEXT_PUBLIC_SUPABASE_URL"]
 KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
@@ -313,6 +314,7 @@ def main():
         time.sleep(3)
 
     print(f"[backfill] done. total repaired={total_repaired}, total upserted={total_upserted}")
+    warn_if_zero("Backfill : établissements upsertés", total_upserted)
 
 
 if __name__ == "__main__":

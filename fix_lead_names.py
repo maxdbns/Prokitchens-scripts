@@ -9,6 +9,7 @@ import os
 import sys
 import unicodedata
 import requests
+from run_guard import warn_if_zero
 
 BATCH_SIZE = 1000
 
@@ -153,6 +154,7 @@ def main():
             break
 
     print(f"[fix-lead-names] Terminé. Processed {processed}, corrected {corrected}, skipped {skipped}")
+    warn_if_zero("Fix lead names : leads traités", processed)
 
 
 if __name__ == "__main__":

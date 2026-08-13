@@ -28,6 +28,15 @@ jobs:
           node-version: 20
       - run: cd prokitchens-app && npm ci --ignore-scripts
       - run: cd prokitchens-app && npx tsx scripts/run-insee-sync.ts
+      - if: failure()
+        uses: actions/checkout@v5
+        with:
+          path: ci-scripts
+      - if: failure()
+        run: python3 ci-scripts/scripts/notify_workflow_failure.py
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}
 
   cleanup-closed-sirets:
     needs: insee-sync
@@ -48,6 +57,11 @@ jobs:
           python-version: "3.12"
       - run: pip install --quiet requests
       - run: python3 cleanup_closed_sirets.py
+      - if: failure()
+        run: python3 scripts/notify_workflow_failure.py
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}
 
   cleanup-closed-leads:
     needs: cleanup-closed-sirets
@@ -68,3 +82,8 @@ jobs:
           python-version: "3.12"
       - run: pip install --quiet requests
       - run: python3 cleanup_closed_leads.py
+      - if: failure()
+        run: python3 scripts/notify_workflow_failure.py
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}

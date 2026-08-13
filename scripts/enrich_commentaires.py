@@ -19,6 +19,9 @@ import time
 
 import requests
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from run_guard import warn_if_zero
+
 ENV_PATH = "/zpool/one/maxime.debaugnies/prokitchens-app/.env"
 FIREBASE_KEY = "AIzaSyBrV4UUSZyoEmUGeWYOT8JmVNCNps0-tBk"
 DETAILS_URL = "https://api.app.unemplacement.com/member_api/prospection_details"
@@ -157,6 +160,9 @@ def main():
             print(f"{i + 1}/{len(rows)} updated={updated} api_failures={api_failures}", flush=True)
 
     print(f"demandes={len(rows)} updated={updated} errors={errors} api_failures={api_failures}")
+    warn_if_zero("Enrich commentaires : demandes récupérées", len(rows))
+    if rows:
+        warn_if_zero("Enrich commentaires : demandes mises à jour", updated)
 
 
 if __name__ == "__main__":

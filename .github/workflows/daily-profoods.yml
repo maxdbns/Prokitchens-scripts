@@ -23,6 +23,11 @@ jobs:
       - run: pip install --quiet requests playwright
       - run: python3 -m playwright install --with-deps chromium
       - run: python3 scripts/enrich_enseignes.py
+      - if: failure()
+        run: python3 scripts/notify_workflow_failure.py
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}
 
   vercel-notifications:
     needs: enrich-enseignes
@@ -39,6 +44,11 @@ jobs:
         with:
           python-version: "3.12"
       - run: python3 trigger_vercel_cron.py
+      - if: failure()
+        run: python3 scripts/notify_workflow_failure.py
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}
 
   revalidate-google:
     needs: vercel-notifications
@@ -55,3 +65,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: python3 trigger_revalidate_google.py
+      - if: failure()
+        run: python3 scripts/notify_workflow_failure.py
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}

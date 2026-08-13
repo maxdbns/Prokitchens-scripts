@@ -14,6 +14,7 @@ import requests
 from datetime import datetime
 
 import prokitchens_env
+from run_guard import warn_if_zero
 prokitchens_env.load_env()
 
 GOOGLE_API_KEY = os.environ.get("GOOGLE_PLACES_API_KEY", "")
@@ -165,6 +166,8 @@ def main():
 
     log("=" * 60)
     log(f"TERMINÉ: {len(leads)} traités, {found_phone} tel, {found_website} web")
+    if leads:
+        warn_if_zero("Google enrich : téléphones + sites trouvés", found_phone + found_website)
     log("=" * 60)
 
 

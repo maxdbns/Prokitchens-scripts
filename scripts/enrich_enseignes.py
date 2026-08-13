@@ -14,6 +14,9 @@ import os
 import sys
 import time
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from run_guard import warn_if_zero
+
 import requests
 from playwright.sync_api import sync_playwright
 
@@ -166,6 +169,9 @@ def main():
             ok += 1
         time.sleep(0.05)
     print(f"  {ok}/{len(mapping)} lignes mises à jour")
+    warn_if_zero("Enrich enseignes : noms mappés", len(mapping))
+    if mapping:
+        warn_if_zero("Enrich enseignes : lignes mises à jour", ok)
 
 
 if __name__ == "__main__":

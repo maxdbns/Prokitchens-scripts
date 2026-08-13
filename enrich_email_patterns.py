@@ -16,6 +16,7 @@ import re
 import time
 import socket
 import requests
+from run_guard import warn_if_zero
 from datetime import datetime
 from urllib.parse import urlparse
 from typing import Optional, List, Dict, Any
@@ -239,6 +240,8 @@ def main():
 
     log("=" * 60)
     log(f"TERMINÉ: {generated}/{len(leads)} emails générés")
+    if leads:
+        warn_if_zero("Email patterns : emails générés", generated)
     log(f"  MX valides: {mx_ok}, MX invalides: {mx_fail}, domaines gratuits: {skipped_free}")
     log("=" * 60)
 

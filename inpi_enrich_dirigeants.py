@@ -11,8 +11,11 @@ Quota INPI : 10 000 requêtes/jour. Le script s'arrête automatiquement au quota
 import os
 import sys
 import requests
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
+from run_guard import warn_if_zero
 from typing import List, Dict, Any, Optional
 
 # ─── Config ───
@@ -26,6 +29,7 @@ SUPABASE_TABLE = os.environ.get("SUPABASE_TABLE", "leads")
 
 DAILY_QUOTA = 9500
 REQUEST_DELAY = 0.35
+MAX_WORKERS = 4
 BATCH_SIZE = 1000
 os.makedirs("logs", exist_ok=True)
 LOG_FILE = os.path.join("logs", "inpi_enrich_dirigeants.log")
@@ -166,11 +170,19 @@ def extract_dirigeant(data: Dict[str, Any]) -> Optional[Dict[str, str]]:
     return None
 
 
+# Signal global : un thread qui prend un 429 fait patienter tous les autres
+_rate_limited = threading.Event()
+
+
 def get_dirigeant(siren: str, headers: Dict[str, str]) -> Optional[Dict[str, str]]:
     """
     Récupère le dirigeant pour un SIREN. Retourne None si non trouvé.
     Retourne la string 'REAUTH' si le token a expiré.
     """
+    # Si un autre thread a déclenché un 429, on attend la fin de la pause
+    while _rate_limited.is_set():
+        time.sleep(1)
+
     try:
         resp = requests.get(
             f"{INPI_BASE_URL}/companies/{siren}",
@@ -184,8 +196,14 @@ def get_dirigeant(siren: str, headers: Dict[str, str]) -> Optional[Dict[str, str
     if resp.status_code == 404:
         return None
     if resp.status_code == 429:
-        log("  Rate limit INPI, pause 60s...")
-        time.sleep(60)
+        if not _rate_limited.is_set():
+            _rate_limited.set()
+            log("  Rate limit INPI, pause 60s (tous workers)...")
+            time.sleep(60)
+            _rate_limited.clear()
+        else:
+            while _rate_limited.is_set():
+                time.sleep(1)
         return get_dirigeant(siren, headers)
     if resp.status_code == 401:
         return "REAUTH"  # type: ignore
@@ -229,14 +247,56 @@ def main():
         sys.exit(1)
 
     token = inpi_login()
-    headers = {"Authorization": f"Bearer {token}"}
+    state = {"headers": {"Authorization": f"Bearer {token}"}}
+    counters = {"processed": 0, "found": 0, "api_calls": 0}
+    lock = threading.Lock()
+    auth_lock = threading.Lock()
 
-    total_processed = 0
-    total_found = 0
-    api_calls = 0
+    def worker(lead: Dict[str, Any]) -> None:
+        with lock:
+            if counters["api_calls"] >= DAILY_QUOTA:
+                return
+            counters["api_calls"] += 1
 
-    while api_calls < DAILY_QUOTA:
-        remaining = DAILY_QUOTA - api_calls
+        siren = lead["siren"]
+        nom = lead.get("nom", "?")[:45]
+
+        dirigeant = get_dirigeant(siren, state["headers"])
+
+        if dirigeant == "REAUTH":
+            with auth_lock:
+                # Un autre thread a peut-être déjà rafraîchi le token
+                dirigeant = get_dirigeant(siren, state["headers"])
+                if dirigeant == "REAUTH":
+                    log("Token expiré, reconnexion...")
+                    token = inpi_login()
+                    state["headers"] = {"Authorization": f"Bearer {token}"}
+                    dirigeant = get_dirigeant(siren, state["headers"])
+                    with lock:
+                        counters["api_calls"] += 1
+
+        if dirigeant and dirigeant != "REAUTH":
+            role = dirigeant.pop("dirigeant_role", "")
+            with lock:
+                counters["found"] += 1
+                done = counters["processed"] + 1
+            log(f"  [{done}] {nom:45s} -> {dirigeant['dirigeant_prenom']} {dirigeant['dirigeant_nom']} ({role})")
+            patch_lead(siren, dirigeant)
+        else:
+            # Marque l'échec pour ne pas re-tenter immédiatement
+            patch_lead(siren, {"inpi_dirigeants_failed": datetime.now().isoformat()})
+
+        with lock:
+            counters["processed"] += 1
+            done = counters["processed"]
+            if done % 500 == 0:
+                pct = (counters["found"] / done * 100) if done else 0
+                log(f"── Progression: {done} traités, {counters['found']} dirigeants ({pct:.1f}%), {counters['api_calls']} appels API ──")
+
+        time.sleep(REQUEST_DELAY)
+
+    while counters["api_calls"] < DAILY_QUOTA:
+        remaining = DAILY_QUOTA - counters["api_calls"]
         batch_size = min(BATCH_SIZE, remaining)
 
         leads = fetch_leads(batch_size)
@@ -244,46 +304,21 @@ def main():
             log("Plus aucun lead à enrichir.")
             break
 
-        log(f"Batch de {len(leads)} leads (API calls: {api_calls}/{DAILY_QUOTA})")
+        log(f"Batch de {len(leads)} leads (API calls: {counters['api_calls']}/{DAILY_QUOTA})")
 
-        for lead in leads:
-            if api_calls >= DAILY_QUOTA:
-                log(f"Quota journalier atteint ({DAILY_QUOTA})")
-                break
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+            pool.map(worker, leads)
 
-            siren = lead["siren"]
-            nom = lead.get("nom", "?")[:45]
-
-            dirigeant = get_dirigeant(siren, headers)
-            api_calls += 1
-
-            if dirigeant == "REAUTH":
-                log("Token expiré, reconnexion...")
-                token = inpi_login()
-                headers = {"Authorization": f"Bearer {token}"}
-                dirigeant = get_dirigeant(siren, headers)
-                api_calls += 1
-
-            if dirigeant:
-                total_found += 1
-                role = dirigeant.pop("dirigeant_role", "")
-                log(f"  [{total_processed+1}] {nom:45s} -> {dirigeant['dirigeant_prenom']} {dirigeant['dirigeant_nom']} ({role})")
-                patch_lead(siren, dirigeant)
-            else:
-                # Marque l'échec pour ne pas re-tenter immédiatement
-                patch_lead(siren, {"inpi_dirigeants_failed": datetime.now().isoformat()})
-
-            total_processed += 1
-
-            if total_processed % 500 == 0:
-                pct = (total_found / total_processed * 100) if total_processed else 0
-                log(f"── Progression: {total_processed} traités, {total_found} dirigeants ({pct:.1f}%), {api_calls} appels API ──")
-
-            time.sleep(REQUEST_DELAY)
+    total_processed = counters["processed"]
+    total_found = counters["found"]
+    api_calls = counters["api_calls"]
 
     log("=" * 60)
     pct = (total_found / total_processed * 100) if total_processed else 0
     log(f"TERMINÉ: {total_processed} traités, {total_found} dirigeants trouvés ({pct:.1f}%)")
+    warn_if_zero("INPI : leads traités", total_processed)
+    if total_processed:
+        warn_if_zero("INPI : dirigeants trouvés", total_found)
     log(f"Appels API: {api_calls}/{DAILY_QUOTA}")
     log("=" * 60)
 

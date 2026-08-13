@@ -23,6 +23,11 @@ jobs:
           python-version: "3.12"
       - run: pip install --quiet requests rapidfuzz
       - run: python3 daily_sirene_delta.py
+      - if: failure()
+        run: python3 scripts/notify_workflow_failure.py
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}
 
   enrich-contact:
     needs: sirene-delta
@@ -41,6 +46,11 @@ jobs:
           python-version: "3.12"
       - run: pip install --quiet requests
       - run: python3 enrich_contact.py
+      - if: failure()
+        run: python3 scripts/notify_workflow_failure.py
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}
 
   email-patterns:
     needs: enrich-contact
@@ -59,3 +69,8 @@ jobs:
           python-version: "3.12"
       - run: pip install --quiet requests dnspython
       - run: python3 enrich_email_patterns.py
+      - if: failure()
+        run: python3 scripts/notify_workflow_failure.py
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}
