@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Déclenche le cron Vercel /api/cron/daily après l'enrichissement nocturne.
-Lu par lead_scheduler.py.
+Appelé par le workflow daily-profoods.yml (job vercel-notifications).
 """
 import os
 import sys
