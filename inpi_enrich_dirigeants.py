@@ -140,12 +140,12 @@ def extract_dirigeant(data: Dict[str, Any]) -> Optional[Dict[str, str]]:
     pm = content.get("personneMorale", {})
     pouvoirs = pm.get("composition", {}).get("pouvoirs", [])
 
-    # Personne physique
+    # Personne physique : l'identité est sous identite.entrepreneur.descriptionPersonne
     pp = content.get("personnePhysique", {})
     if not pouvoirs and pp:
-        etablissement = pp.get("etablissementPrincipal", {})
-        nom = pp.get("nom")
-        prenoms = pp.get("prenoms", [])
+        desc = pp.get("identite", {}).get("entrepreneur", {}).get("descriptionPersonne", {})
+        nom = desc.get("nom") or pp.get("nom")
+        prenoms = desc.get("prenoms") or pp.get("prenoms", [])
         if nom and prenoms:
             return {
                 "dirigeant_nom": nom.title(),
