@@ -12,6 +12,7 @@ API_URL = os.environ.get(
     "PROFOODS_API_URL",
     "https://prokitchens-three.vercel.app/api/profoods/ingest"
 )
+PUSH_SECRET = os.environ.get("PROFOODS_SHEETS_SECRET") or os.environ.get("CRON_SECRET") or ""
 
 
 def main() -> None:
@@ -54,7 +55,12 @@ def main() -> None:
             b["prospects"] = []
 
     print(f"[INFO] Push de {len(biens)} biens vers {API_URL}")
-    resp = requests.post(API_URL, json={"demandes": [], "biens": biens}, timeout=120)
+    resp = requests.post(
+        API_URL,
+        json={"demandes": [], "biens": biens},
+        headers={"Authorization": f"Bearer {PUSH_SECRET}"},
+        timeout=120,
+    )
     print(f"[INFO] Status : {resp.status_code}")
     try:
         print(resp.json())
