@@ -27,9 +27,8 @@ KEYWORDS = [
     "dark kitchen",
     "cloud kitchen",
     "fast food",
-    "pop-up restaurant",
     "ghost kitchen",
-]
+]  # Google Trends caps comparisons at 5 keywords per request
 
 def headers():
     return {
@@ -39,15 +38,34 @@ def headers():
     }
 
 def get_regions():
-    """Fetch distinct regions currently present in leads"""
-    resp = requests.get(
-        f"{SUPABASE_URL}/rest/v1/leads?select=region&region=not.is.null&limit=10000",
-        headers=headers(),
-    )
-    if resp.status_code != 200:
-        print(f"❌ Failed to fetch regions: {resp.status_code} {resp.text[:200]}")
-        return []
-    return sorted({row["region"] for row in resp.json() if row.get("region")})
+    """Fetch all distinct regions across the full leads table (paginated —
+    PostgREST has no DISTINCT, and a single unpaginated page only reflects
+    whatever slice happens to sort first, missing every other region)."""
+    regions = set()
+    offset = 0
+    page_size = 5000
+    while True:
+        resp = requests.get(
+            f"{SUPABASE_URL}/rest/v1/leads",
+            headers=headers(),
+            params={
+                "select": "region",
+                "region": "not.is.null",
+                "limit": page_size,
+                "offset": offset,
+            },
+        )
+        if resp.status_code != 200:
+            print(f"❌ Failed to fetch regions: {resp.status_code} {resp.text[:200]}")
+            break
+        batch = resp.json()
+        if not batch:
+            break
+        regions.update(row["region"] for row in batch if row.get("region"))
+        offset += len(batch)
+        if len(batch) < page_size:
+            break
+    return sorted(regions)
 
 def get_trending_keywords():
     """Get trending food/restaurant keywords nationally (FR).
