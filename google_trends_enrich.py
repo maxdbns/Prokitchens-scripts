@@ -40,10 +40,14 @@ def headers():
 def get_regions():
     """Fetch all distinct regions across the full leads table (paginated —
     PostgREST has no DISTINCT, and a single unpaginated page only reflects
-    whatever slice happens to sort first, missing every other region)."""
+    whatever slice happens to sort first, missing every other region).
+
+    NOTE: Supabase caps REST responses at 1000 rows regardless of the
+    requested `limit` (verified live) — so pagination must stop on an empty
+    page, never on "batch shorter than requested limit", or it silently
+    exits after page 1 whenever the requested limit exceeds that cap."""
     regions = set()
     offset = 0
-    page_size = 5000
     while True:
         resp = requests.get(
             f"{SUPABASE_URL}/rest/v1/leads",
@@ -51,7 +55,7 @@ def get_regions():
             params={
                 "select": "region",
                 "region": "not.is.null",
-                "limit": page_size,
+                "limit": 1000,
                 "offset": offset,
             },
         )
@@ -63,8 +67,6 @@ def get_regions():
             break
         regions.update(row["region"] for row in batch if row.get("region"))
         offset += len(batch)
-        if len(batch) < page_size:
-            break
     return sorted(regions)
 
 def get_trending_keywords():
