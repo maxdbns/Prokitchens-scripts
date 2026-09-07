@@ -1,0 +1,46 @@
+ÉTAPE 1 : Upgrade Node.js à la version 22
+===========================================
+
+⚠️  SI TU N'AS PAS LE MOT DE PASSE SUDO
+=====================================
+
+Utilise nvm (Node Version Manager) à la place — pas besoin de sudo !
+
+Commande 1 - Installe nvm :
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+
+Commande 2 - Recharge ton terminal (ou redémarre Jupyter) :
+source ~/.bashrc
+
+Commande 3 - Installe Node 22 :
+nvm install 22
+
+✅ C'est fini ! Node 22 est maintenant installé pour ton utilisateur.
+
+
+⚠️  SI TU AS LE MOT DE PASSE SUDO
+==================================
+
+Exécute cette commande dans ton terminal :
+
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - && sudo apt-get install -y nodejs
+
+Attends que ce soit fini (ça peut prendre quelques minutes).
+(Il te demandera ton mot de passe sudo en chemin)
+
+
+ÉTAPE 2 : Vérifie que Node 22 est installé
+===========================================
+
+node --version
+
+(Ça doit afficher v22.x.x ou plus)
+
+
+ÉTAPE 3 : Ajoute la skill frontend-design
+==========================================
+
+npx skills add https://github.com/anthropics/skills-skill frontend-design
+
+
+C'est bon! Dis-moi quand tu as fini et on continue avec le portfolio.

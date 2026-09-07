@@ -95,3 +95,8 @@ actions-runner.pid
 # Artefacts de build / test
 .next/
 test_email.html
+.vercel
+.env*
+
+# Projet portfolio personnel (repo git séparé, ne doit jamais entrer ici)
+perso/
