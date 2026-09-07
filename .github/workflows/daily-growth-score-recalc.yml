@@ -1,0 +1,34 @@
+name: "Daily: Growth Velocity Score Recalculation"
+
+on:
+  schedule:
+    - cron: "45 22 * * *"  # 22:45 UTC every day (after all other enrichments)
+  workflow_dispatch:
+
+jobs:
+  recalc-growth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: "true"
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_API_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install --quiet requests pytrends
+
+      - name: Recalculate growth scores
+        run: python3 recalc_growth_score.py
+
+      - if: failure()
+        run: python3 scripts/notify_workflow_failure.py
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}
