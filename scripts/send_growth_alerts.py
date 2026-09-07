@@ -1,29 +1,35 @@
 #!/usr/bin/env python3
 """
-Send weekly email alerts with top growth opportunities
+Send weekly email alerts with top growth opportunities.
+Uses growth_velocity_score computed by recalc_growth_score.py, based on
+real signals: CA growth, relative site-opening velocity, Google Trends
+momentum, and Google reviews/traction proxy.
 """
 
 import os
 import sys
 from datetime import datetime
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../prokitchens-app"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "prokitchens-app"))
+os.environ.setdefault("PROKITCHENS_APP_DIR", os.path.join(os.path.dirname(__file__), "..", "prokitchens-app"))
 from prokitchens_env import load_env
 load_env()
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_API_KEY")
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_API_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 RESEND_KEY = os.environ.get("RESEND_API_KEY")
 EMAIL_TO = os.environ.get("NOTIFICATION_EMAIL_TO")
 
 if not all([SUPABASE_URL, SUPABASE_KEY, RESEND_KEY, EMAIL_TO]):
-    print("❌ Missing credentials")
+    missing = [n for n, v in [("SUPABASE_URL", SUPABASE_URL), ("SUPABASE_KEY", SUPABASE_KEY),
+                               ("RESEND_KEY", RESEND_KEY), ("EMAIL_TO", EMAIL_TO)] if not v]
+    print(f"❌ Missing credentials: {', '.join(missing)}")
     sys.exit(1)
 
 import requests
 
 def get_top_growth_leads():
-    """Get top 20 growth leads from this week"""
+    """Get top 20 growth leads from the top_growth_leads view"""
     headers = {
         "Authorization": f"Bearer {SUPABASE_KEY}",
         "Content-Type": "application/json",
@@ -40,6 +46,7 @@ def get_top_growth_leads():
 
     if response.status_code == 200:
         return response.json()
+    print(f"⚠️ Could not fetch top_growth_leads: {response.status_code} {response.text[:200]}")
     return []
 
 def send_email(leads):
@@ -48,11 +55,14 @@ def send_email(leads):
         print("No high-growth leads to alert")
         return
 
-    # Build HTML table
     rows = ""
     for lead in leads[:20]:
         category = lead.get('growth_category', 'stable')
-        score = lead.get('growth_velocity_score', 0)
+        score = lead.get('growth_velocity_score', 0) or 0
+        sites_ouverts = lead.get('sites_ouverts_12m', 0) or 0
+        croissance_ca = lead.get('croissance_ca')
+        ca_display = f"+{croissance_ca:.0f}%" if croissance_ca else "N/A"
+
         rows += f"""
         <tr>
             <td style="padding: 10px; border-bottom: 1px solid #eee;">
@@ -66,13 +76,13 @@ def send_email(leads):
                 </span>
             </td>
             <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">
-                {score:.2%}
+                {score:.0%}
             </td>
             <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">
-                {lead.get('linkedin_followers', 0):,} followers
+                {ca_display}
             </td>
             <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">
-                {lead.get('linkedin_hires_3m', 0)} hires
+                {sites_ouverts} nouveau(x) site(s) / 12m
             </td>
         </tr>
         """
@@ -89,17 +99,17 @@ def send_email(leads):
         </head>
         <body>
             <div class="container">
-                <h2>🚀 ProKitchens Weekly Growth Report</h2>
-                <p>Top 20 hyper-scale QSR opportunities detected this week</p>
+                <h2>🚀 ProKitchens — Rapport de croissance hebdomadaire</h2>
+                <p>Top 20 opportunités QSR en forte croissance (y compris les petites structures en hyperscale)</p>
 
                 <table>
                     <thead>
                         <tr>
                             <th>Restaurant</th>
-                            <th>Category</th>
-                            <th>Growth Score</th>
-                            <th>LinkedIn Followers</th>
-                            <th>Recent Hires (3m)</th>
+                            <th>Catégorie</th>
+                            <th>Score croissance</th>
+                            <th>Croissance CA</th>
+                            <th>Ouvertures récentes</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -109,16 +119,17 @@ def send_email(leads):
 
                 <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
                 <p style="color: #666; font-size: 12px;">
-                    <strong>Growth Score</strong>: Composite metric of CA growth, LinkedIn hiring, follower growth, Google Trends momentum
+                    <strong>Score de croissance</strong> : combine croissance du CA, vitesse d'ouverture de nouveaux sites
+                    (relative à la taille — un passage de 1 à 2 sites compte autant qu'un passage de 50 à 100),
+                    tendances Google régionales, et traction (avis Google).
                     <br/>
-                    <strong>Hyper-growth</strong>: > 80% | <strong>Strong growth</strong>: > 50% | <strong>Growth</strong>: > 30%
+                    <strong>Hyper-growth</strong> : &gt; 80% | <strong>Strong growth</strong> : &gt; 50% | <strong>Growth</strong> : &gt; 30%
                 </p>
             </div>
         </body>
     </html>
     """
 
-    # Send via Resend
     response = requests.post(
         "https://api.resend.com/emails",
         headers={
@@ -126,7 +137,7 @@ def send_email(leads):
             "Content-Type": "application/json"
         },
         json={
-            "from": "ProKitchens <noreply@prokitchens.dev>",
+            "from": "ProKitchens <onboarding@resend.dev>",
             "to": EMAIL_TO,
             "subject": f"🚀 ProKitchens Growth Report — {datetime.now().strftime('%Y-%m-%d')}",
             "html": html

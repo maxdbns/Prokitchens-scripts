@@ -8,8 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_API_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -17,49 +16,50 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install --quiet requests psycopg2-binary
+        run: pip install --quiet psycopg2-binary
 
-      - name: Apply migration
+      - name: Apply migration via session pooler (IPv4-reachable)
         run: |
           python3 << 'PYTHON_EOF'
           import os
           import psycopg2
-          from urllib.parse import urlparse
 
-          SUPABASE_URL = os.environ.get("SUPABASE_URL")
-          SUPABASE_API_KEY = os.environ.get("SUPABASE_API_KEY")
-
-          if not SUPABASE_URL or not SUPABASE_API_KEY:
-              print("❌ Credentials missing")
+          password = os.environ.get("SUPABASE_DB_PASSWORD")
+          if not password:
+              print("❌ SUPABASE_DB_PASSWORD secret missing")
               exit(1)
 
-          # Parse Supabase URL
-          parsed_url = urlparse(SUPABASE_URL)
-          project_id = parsed_url.hostname.split('.')[0]
-
-          # PostgreSQL connection
-          db_url = f"postgresql://postgres:{SUPABASE_API_KEY}@db.{project_id}.supabase.co:5432/postgres"
+          # Direct db.<ref>.supabase.co:5432 is unreachable from GitHub Actions runners
+          # (verified: "Network is unreachable" — likely IPv6-only egress on that host).
+          # The session pooler on AWS infra IS reachable (verified via raw TCP connect).
+          dsn = (
+              f"postgresql://postgres.hxjryfaakdpwfgseirik:{password}"
+              f"@aws-0-eu-west-3.pooler.supabase.com:5432/postgres?sslmode=require"
+          )
 
           try:
-              conn = psycopg2.connect(db_url, connect_timeout=10)
+              conn = psycopg2.connect(dsn, connect_timeout=15)
+              conn.autocommit = True
               cursor = conn.cursor()
 
-              # Read migration file
               with open("prokitchens-app/migrations/20260907_add_growth_tracking.sql", "r") as f:
                   sql = f.read()
 
-              # Split by semicolon and execute each statement
-              statements = [s.strip() for s in sql.split(';') if s.strip() and not s.strip().startswith('--')]
+              print("Executing full migration file...")
+              cursor.execute(sql)
+              print("✅ Migration executed")
 
-              for i, stmt in enumerate(statements, 1):
-                  print(f"[{i}/{len(statements)}] Executing migration...", end=" ", flush=True)
-                  cursor.execute(stmt)
-                  print("✅")
+              cursor.execute("""
+                SELECT COUNT(*) as total,
+                       COUNT(growth_velocity_score) as with_score,
+                       COUNT(google_trend_score) as with_trend
+                FROM public.leads;
+              """)
+              total, with_score, with_trend = cursor.fetchone()
+              print(f"✅ Verification: {total} leads total, {with_score} with growth_velocity_score column, {with_trend} with google_trend_score column")
 
-              conn.commit()
               cursor.close()
               conn.close()
-
               print("\n✅ Migration applied successfully!")
 
           except Exception as e:
