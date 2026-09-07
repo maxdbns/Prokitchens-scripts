@@ -1,0 +1,68 @@
+name: "ONCE: Apply growth tracking schema migration"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  apply-migration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_API_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install --quiet requests psycopg2-binary
+
+      - name: Apply migration
+        run: |
+          python3 << 'PYTHON_EOF'
+          import os
+          import psycopg2
+          from urllib.parse import urlparse
+
+          SUPABASE_URL = os.environ.get("SUPABASE_URL")
+          SUPABASE_API_KEY = os.environ.get("SUPABASE_API_KEY")
+
+          if not SUPABASE_URL or not SUPABASE_API_KEY:
+              print("❌ Credentials missing")
+              exit(1)
+
+          # Parse Supabase URL
+          parsed_url = urlparse(SUPABASE_URL)
+          project_id = parsed_url.hostname.split('.')[0]
+
+          # PostgreSQL connection
+          db_url = f"postgresql://postgres:{SUPABASE_API_KEY}@db.{project_id}.supabase.co:5432/postgres"
+
+          try:
+              conn = psycopg2.connect(db_url, connect_timeout=10)
+              cursor = conn.cursor()
+
+              # Read migration file
+              with open("prokitchens-app/migrations/20260907_add_growth_tracking.sql", "r") as f:
+                  sql = f.read()
+
+              # Split by semicolon and execute each statement
+              statements = [s.strip() for s in sql.split(';') if s.strip() and not s.strip().startswith('--')]
+
+              for i, stmt in enumerate(statements, 1):
+                  print(f"[{i}/{len(statements)}] Executing migration...", end=" ", flush=True)
+                  cursor.execute(stmt)
+                  print("✅")
+
+              conn.commit()
+              cursor.close()
+              conn.close()
+
+              print("\n✅ Migration applied successfully!")
+
+          except Exception as e:
+              print(f"❌ Error: {e}")
+              exit(1)
+          PYTHON_EOF
