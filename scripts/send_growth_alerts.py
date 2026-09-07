@@ -10,11 +10,6 @@ import os
 import sys
 from datetime import datetime
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "prokitchens-app"))
-os.environ.setdefault("PROKITCHENS_APP_DIR", os.path.join(os.path.dirname(__file__), "..", "prokitchens-app"))
-from prokitchens_env import load_env
-load_env()
-
 SUPABASE_URL = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_API_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 RESEND_KEY = os.environ.get("RESEND_API_KEY")

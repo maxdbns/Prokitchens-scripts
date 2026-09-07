@@ -8,7 +8,7 @@ on:
 jobs:
   recalc-growth:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 75
     env:
       CI: "true"
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -22,7 +22,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install --quiet requests pytrends
+        run: pip install --quiet requests
 
       - name: Recalculate growth scores
         run: python3 recalc_growth_score.py
