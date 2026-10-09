@@ -3,12 +3,16 @@ Enrichissement Google Places — QSR (56.10C) Île-de-France uniquement.
 Priorité par score décroissant. Pas de limite de leads.
 """
 
+import os
 import requests
 import time
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-GOOGLE_API_KEY = "AIzaSyA9mLoqkEtojwJEC4jAze1jdafcKw2qH6Y"
+from prokitchens_env import load_env
+
+load_env()
+GOOGLE_API_KEY = os.environ["GOOGLE_PLACES_API_KEY"]
 SUPABASE_URL = "https://hxjryfaakdpwfgseirik.supabase.co"
 SUPABASE_API_KEY = "sb_publishable_a7xpn8srwByQrW1rXwpdlw_eQnwAoHT"
 

@@ -5,11 +5,15 @@ et ecrit leads_qualifies_enrichis.csv avec telephones/sites corriges.
 """
 
 import csv
+import os
 import time
 from datetime import datetime
 import requests
 
-GOOGLE_API_KEY = "AIzaSyA9mLoqkEtojwJEC4jAze1jdafcKw2qH6Y"
+from prokitchens_env import load_env
+
+load_env()
+GOOGLE_API_KEY = os.environ["GOOGLE_PLACES_API_KEY"]
 INPUT_CSV = "data/leads_qualifies.csv"
 OUTPUT_CSV = "data/leads_qualifies_enrichis.csv"
 LOG_FILE = "/zpool/one/maxime.debaugnies/logs/enrich_qualifies_google.log"

@@ -25,13 +25,11 @@ from typing import Any
 
 import requests
 
-SUPABASE_URL = os.environ.get(
-    "SUPABASE_URL", "https://hxjryfaakdpwfgseirik.supabase.co"
-)
-SUPABASE_KEY = os.environ.get(
-    "SUPABASE_SERVICE_ROLE_KEY",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4anJ5ZmFha2Rwd2Znc2VpcmlrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjkwMzgwMCwiZXhwIjoyMDk4NDc5ODAwfQ.gGba1EWAucnG7kaI2E__-lSWj1yAQjyEp2LpltFiKKw",
-)
+from prokitchens_env import load_env
+
+load_env()
+SUPABASE_URL = os.environ["SUPABASE_URL"]
+SUPABASE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 
 DECP_DATASET_SLUG = "donnees-essentielles-de-la-commande-publique-fichiers-consolides"
 DATASET_API_URL = f"https://www.data.gouv.fr/api/1/datasets/{DECP_DATASET_SLUG}/"

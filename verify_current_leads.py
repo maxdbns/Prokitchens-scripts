@@ -1,9 +1,13 @@
+import os
 import requests
 import time
 from collections import Counter
 
-SUPABASE_URL = "https://hxjryfaakdpwfgseirik.supabase.co"
-SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4anJ5ZmFha2Rwd2Znc2VpcmlrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjkwMzgwMCwiZXhwIjoyMDk4NDc5ODAwfQ.gGba1EWAucnG7kaI2E__-lSWj1yAQjyEp2LpltFiKKw"
+from prokitchens_env import load_env
+
+load_env()
+SUPABASE_URL = os.environ["SUPABASE_URL"]
+SUPABASE_API_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 PAGE_SIZE = 1000
 
 

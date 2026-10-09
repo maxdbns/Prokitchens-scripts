@@ -3,11 +3,15 @@ Enrichissement Google Places en masse — leads 56.10C + 56.21Z
 Priorité par score décroissant.
 """
 
+import os
 import requests
 import time
 from datetime import datetime
 
-GOOGLE_API_KEY = "AIzaSyA9mLoqkEtojwJEC4jAze1jdafcKw2qH6Y"
+from prokitchens_env import load_env
+
+load_env()
+GOOGLE_API_KEY = os.environ["GOOGLE_PLACES_API_KEY"]
 SUPABASE_URL = "https://hxjryfaakdpwfgseirik.supabase.co"
 SUPABASE_API_KEY = "sb_publishable_a7xpn8srwByQrW1rXwpdlw_eQnwAoHT"
 
