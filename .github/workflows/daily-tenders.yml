@@ -1,0 +1,67 @@
+name: "Daily: Appels d'offres (multi-sources)"
+
+# Runs before the Vercel cron (04:00 UTC) so the morning briefing sees today's tenders.
+on:
+  schedule:
+    - cron: "7 3 * * *"
+  workflow_dispatch:
+    inputs:
+      sources:
+        description: "Sources à lancer (ids séparés par des virgules, vide = toutes)"
+        required: false
+        default: ""
+      since_days:
+        description: "Fenêtre en jours (vide = défaut par source)"
+        required: false
+        default: ""
+      dry_run:
+        description: "Dry run (aucune écriture en base)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: daily-tenders
+  cancel-in-progress: false
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CI: "true"
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      NODE_OPTIONS: "--max-old-space-size=3072"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: maxdbns/Prokitchens
+          ssh-key: ${{ secrets.PROKITCHENS_APP_SSH_KEY }}
+          path: prokitchens-app
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: prokitchens-app/package-lock.json
+      - run: cd prokitchens-app && npm ci --ignore-scripts
+      - name: Harvest
+        working-directory: prokitchens-app
+        env:
+          IN_SOURCES: ${{ inputs.sources }}
+          IN_SINCE_DAYS: ${{ inputs.since_days }}
+          IN_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          ARGS=()
+          if [ -n "$IN_SOURCES" ]; then ARGS+=("--source=$IN_SOURCES"); fi
+          if [ -n "$IN_SINCE_DAYS" ]; then ARGS+=("--since-days=$IN_SINCE_DAYS"); fi
+          if [ "$IN_DRY_RUN" = "true" ]; then ARGS+=("--dry-run"); fi
+          npx tsx scripts/run-tender-harvest.ts "${ARGS[@]}"
+      - if: failure()
+        uses: actions/checkout@v5
+        with:
+          path: ci-scripts
+      - if: failure()
+        run: python3 ci-scripts/scripts/notify_workflow_failure.py
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}

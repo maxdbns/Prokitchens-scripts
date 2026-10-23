@@ -1,0 +1,43 @@
+name: "Manual: Apply SQL migration"
+
+on:
+  workflow_dispatch:
+    inputs:
+      file:
+        description: "Chemin de la migration dans le repo app (ex: migrations/20261009_tender_sources.sql)"
+        required: true
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      MIGRATION_FILE: ${{ inputs.file }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: maxdbns/Prokitchens
+          ssh-key: ${{ secrets.PROKITCHENS_APP_SSH_KEY }}
+          path: prokitchens-app
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet psycopg2-binary
+      # Direct db.<ref>.supabase.co is IPv6-only and unreachable from runners; the session pooler works.
+      - name: Apply via session pooler
+        run: |
+          python3 - <<'PY'
+          import os, sys, psycopg2
+          root = os.path.realpath("prokitchens-app/migrations")
+          path = os.path.realpath(os.path.join("prokitchens-app", os.environ["MIGRATION_FILE"]))
+          if not path.startswith(root + os.sep) or not path.endswith(".sql") or not os.path.isfile(path):
+              sys.exit(f"Migration introuvable ou hors de migrations/: {os.environ['MIGRATION_FILE']}")
+          dsn = (f"postgresql://postgres.hxjryfaakdpwfgseirik:{os.environ['SUPABASE_DB_PASSWORD']}"
+                 "@aws-0-eu-west-3.pooler.supabase.com:5432/postgres?sslmode=require")
+          conn = psycopg2.connect(dsn, connect_timeout=15)
+          conn.autocommit = False
+          with conn, conn.cursor() as cur:
+              cur.execute(open(path).read())
+          print(f"Applied {path}")
+          PY
