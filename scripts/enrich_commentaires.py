@@ -24,6 +24,8 @@ from run_guard import warn_if_zero
 
 ENV_PATH = "/zpool/one/maxime.debaugnies/prokitchens-app/.env"
 FIREBASE_KEY = "AIzaSyBrV4UUSZyoEmUGeWYOT8JmVNCNps0-tBk"
+# La clé Firebase est restreinte au site : sans ces en-têtes, 403 API_KEY_HTTP_REFERRER_BLOCKED.
+WEB_HEADERS = {"Referer": "https://app.unemplacement.com/", "Origin": "https://app.unemplacement.com"}
 DETAILS_URL = "https://api.app.unemplacement.com/member_api/prospection_details"
 MAX_RETRIES = 6
 DELAY_BETWEEN_CALLS = 2.0
@@ -49,6 +51,7 @@ def get_id_token(env):
             "email": env["UNEMPLACEMENT_EMAIL"],
             "password": env["UNEMPLACEMENT_PASSWORD"],
         },
+        headers=WEB_HEADERS,
         timeout=30,
     )
     r.raise_for_status()

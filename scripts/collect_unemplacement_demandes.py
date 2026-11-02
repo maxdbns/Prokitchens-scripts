@@ -16,6 +16,8 @@ import time
 import requests
 
 FIREBASE_API_KEY = "AIzaSyBrV4UUSZyoEmUGeWYOT8JmVNCNps0-tBk"
+# La clé Firebase est restreinte au site : sans ces en-têtes, 403 API_KEY_HTTP_REFERRER_BLOCKED.
+WEB_HEADERS = {"Referer": "https://app.unemplacement.com/", "Origin": "https://app.unemplacement.com"}
 API_URL = "https://api.app.unemplacement.com/member_api/fetch_prospections"
 STATE = "Île-de-France"
 HITS_PER_PAGE = 20
@@ -39,6 +41,7 @@ def get_id_token() -> str:
     r = requests.post(
         f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={FIREBASE_API_KEY}",
         json={"returnSecureToken": True, "email": EMAIL, "password": PASSWORD},
+        headers=WEB_HEADERS,
         timeout=30,
     )
     r.raise_for_status()
