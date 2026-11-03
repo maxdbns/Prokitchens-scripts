@@ -1,0 +1,37 @@
+name: "Daily: ProFoods Sync UnEmplacement"
+
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+
+jobs:
+  sync-unemplacement:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+    steps:
+      - name: Déclencher la sync UnEmplacement
+        run: |
+          url="${NEXT_PUBLIC_SITE_URL%/}"
+          case "$url" in http*) ;; *) url="https://$url" ;; esac
+          status=$(curl -sS -o response.json -w "%{http_code}" --max-time 330 \
+            -X POST "$url/api/profoods/sync" \
+            -H "Authorization: Bearer $CRON_SECRET")
+          echo "HTTP $status"
+          cat response.json; echo
+          test "$status" = "200"
+          jq -e '.ok == true and .inserted_demandes > 0' response.json > /dev/null
+      - uses: actions/checkout@v5
+        if: failure()
+      - uses: actions/setup-python@v6
+        if: failure()
+        with:
+          python-version: "3.12"
+      - if: failure()
+        run: python3 scripts/notify_workflow_failure.py
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}
