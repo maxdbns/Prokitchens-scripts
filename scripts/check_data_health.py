@@ -106,7 +106,7 @@ def check_workflows():
     workflows = github_get("actions/workflows?per_page=100")["workflows"]
     for wf in workflows:
         name = wf["name"]
-        if not name.startswith(("Daily:", "Weekly:")):
+        if not name.startswith(("Daily:", "Weekly:")) or name == os.environ.get("GITHUB_WORKFLOW"):
             continue
         if wf["state"] != "active":
             problems.append(f"Workflow « {name} » : désactivé ({wf['state']})")
