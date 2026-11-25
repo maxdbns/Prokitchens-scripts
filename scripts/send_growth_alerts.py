@@ -132,8 +132,8 @@ def send_email(leads):
             "Content-Type": "application/json"
         },
         json={
-            "from": "ProKitchens <onboarding@resend.dev>",
-            "to": EMAIL_TO,
+            "from": os.environ.get("NOTIFICATION_EMAIL_FROM") or "ProKitchens <onboarding@resend.dev>",
+            "to": [a.strip() for a in EMAIL_TO.split(",") if a.strip()],
             "subject": f"🚀 ProKitchens Growth Report — {datetime.now().strftime('%Y-%m-%d')}",
             "html": html
         }

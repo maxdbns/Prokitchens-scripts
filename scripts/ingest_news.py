@@ -393,8 +393,8 @@ def send_hot_alerts(new_articles, dry_run=False):
                 "Content-Type": "application/json",
             },
             json={
-                "from": "ProKitchens <onboarding@resend.dev>",
-                "to": [e.strip() for e in NOTIFICATION_EMAIL_TO.split(",")],
+                "from": os.environ.get("NOTIFICATION_EMAIL_FROM") or "ProKitchens <onboarding@resend.dev>",
+                "to": [e.strip() for e in NOTIFICATION_EMAIL_TO.split(",") if e.strip()],
                 "subject": f"[ProKitchens] {len(hot)} alerte(s) veille sectorielle",
                 "html": html,
             },

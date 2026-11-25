@@ -34,8 +34,9 @@ def main() -> int:
     )
 
     payload = {
-        "from": "ProKitchens <onboarding@resend.dev>",
-        "to": [to_addr],
+        "from": os.environ.get("NOTIFICATION_EMAIL_FROM", "").strip()
+        or "ProKitchens <onboarding@resend.dev>",
+        "to": [a.strip() for a in to_addr.split(",") if a.strip()],
         "subject": subject,
         "html": html,
     }
