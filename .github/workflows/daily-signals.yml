@@ -1,0 +1,58 @@
+name: "Daily: Signaux métier (BODACC, Alim'confiance)"
+
+on:
+  schedule:
+    - cron: "23 2 * * *"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Fenêtre en jours"
+        required: false
+        default: "30"
+      notify:
+        description: "Créer les notifications (décocher pour un rattrapage)"
+        type: boolean
+        default: true
+
+concurrency:
+  group: daily-signals
+  cancel-in-progress: false
+
+jobs:
+  signals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: "true"
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: maxdbns/Prokitchens
+          ssh-key: ${{ secrets.PROKITCHENS_APP_SSH_KEY }}
+          path: prokitchens-app
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: prokitchens-app/package-lock.json
+      - run: cd prokitchens-app && npm ci --ignore-scripts
+      - name: Ingest
+        working-directory: prokitchens-app
+        env:
+          IN_DAYS: ${{ inputs.days }}
+          IN_NOTIFY: ${{ inputs.notify }}
+        run: |
+          ARGS=("--days=${IN_DAYS:-30}")
+          if [ "$IN_NOTIFY" = "false" ]; then ARGS+=("--no-notify"); fi
+          npx tsx scripts/run-signals.ts "${ARGS[@]}"
+      - if: failure()
+        uses: actions/checkout@v5
+        with:
+          path: ci-scripts
+      - if: failure()
+        run: python3 ci-scripts/scripts/notify_workflow_failure.py
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}
