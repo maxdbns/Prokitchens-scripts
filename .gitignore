@@ -57,6 +57,7 @@ autoexec.log
 
 # Application Next.js (déjà dans son propre dépôt git)
 prokitchens-app/
+prokitchens-short-term/
 
 # Notebooks checkpoints
 .ipynb_checkpoints/
@@ -100,3 +101,7 @@ test_email.html
 
 # Projet portfolio personnel (repo git séparé, ne doit jamais entrer ici)
 perso/
+
+# Fichiers de clés en clair
+cles-*.txt
+KEYS.txt
