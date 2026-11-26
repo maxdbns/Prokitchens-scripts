@@ -1,9 +1,11 @@
 name: "Daily: Appels d'offres (multi-sources)"
 
-# Runs before the Vercel cron (04:00 UTC) so the morning briefing sees today's tenders.
+# Deux collectes par jour ; chacune est suivie des alertes email (nouveaux avis très pertinents,
+# fins de contrat à venir). GitHub peut retarder un passage de plusieurs heures.
 on:
   schedule:
     - cron: "7 3 * * *"
+    - cron: "37 14 * * *"
   workflow_dispatch:
     inputs:
       sources:
@@ -56,6 +58,13 @@ jobs:
           if [ -n "$IN_SINCE_DAYS" ]; then ARGS+=("--since-days=$IN_SINCE_DAYS"); fi
           if [ "$IN_DRY_RUN" = "true" ]; then ARGS+=("--dry-run"); fi
           npx tsx scripts/run-tender-harvest.ts "${ARGS[@]}"
+      - name: Alertes email
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run != true }}
+        working-directory: prokitchens-app
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL_TO: ${{ secrets.NOTIFICATION_EMAIL_TO }}
+        run: npx tsx scripts/run-tender-alerts.ts
       - if: failure()
         uses: actions/checkout@v5
         with:
