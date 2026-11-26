@@ -27,7 +27,6 @@ FRESHNESS_CHECKS = [
     ("Nouveaux leads (Sirene)", "leads", "created_at", 3),
     ("ProFoods (demandes)", "profoods_demandes_clients", "created_at", 6),
     ("ProFoods (matchs)", "profoods_opportunites", "matched_at", 6),
-    ("Google Trends (leads)", "leads", "google_trend_last_checked", 8),
 ]
 
 
@@ -148,7 +147,8 @@ def send_email(problems):
     req = urllib.request.Request(
         "https://api.resend.com/emails",
         data=json.dumps(payload).encode(),
-        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        # Cloudflare (devant Resend) rejette l'User-Agent par défaut de urllib (erreur 1010).
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json", "User-Agent": "ProKitchens/1.0"},
     )
     with urllib.request.urlopen(req, timeout=15) as resp:
         print(f"Rapport envoyé (HTTP {resp.status})")

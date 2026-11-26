@@ -46,6 +46,8 @@ def main() -> int:
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
+            # Cloudflare (devant Resend) rejette l'User-Agent par défaut de urllib (erreur 1010).
+            "User-Agent": "ProKitchens/1.0",
         },
     )
     try:
